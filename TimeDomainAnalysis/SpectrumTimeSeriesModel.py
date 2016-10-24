@@ -25,7 +25,10 @@ cs=np.array(res).astype('float')
 #calculate channe-state via k-means
 def cluster_bytime(level):
     # computing K-Means with K = 2 (2 clusters)
-    centroids,_ = kmeans(level,2)
+    #centroids,_ = kmeans(level,2)
+    # use part of data for training to avoid over-fitting
+    [times,freqs]=level.shape
+    centroids,_ = kmeans(level[0:(times/5).astype('int'),:],2)
     # assign each sample to a cluster
     idx,_ = vq(level,centroids)
     return idx #np.transpose(idx)
@@ -60,7 +63,7 @@ def calc_cs_via_threshold(level):
     MaxL=max(tmpl)
     MinL=min(tmpl)
     #levels that 40% larger than the min-max gap is considered signal
-    thr=MinL+(MaxL-MinL)*0.2
+    thr=MinL+(MaxL-MinL)*0.4
 #    for i in np.arange(times):
 #        for j in np.arange(freqs):
 #            if level[i,j]>thr:
@@ -68,7 +71,6 @@ def calc_cs_via_threshold(level):
     cs=(level>thr)
     return cs
     
-
 #calculate time-occupy rate
 def calc_occ(cs):
     [times,freqs]=cs.shape
@@ -84,9 +86,41 @@ l=sio.loadmat('level.mat')
 level=l["dataLevel"].astype('float')
 #plt.plot(level[:,100])
 
-time=time[1:500]
-level=level[1:500,:]
+#deducte computation
+time=time[0:200]
+level=level[0:200,:]
 
-cs=calc_cs_via_threshold(level)
+#generate time-series of in-band occupy rates
+#cs=calc_cs_via_threshold(level)
 occ=calc_occ(cs)
+#pd.to_csv('tmpdata.csv',header=False)
 plt.plot(occ)
+
+####################
+#Modelling the trend of in-band occ
+####################
+from statsmodels.tsa.stattools import adfuller
+
+def test_stationarity(timeseries):
+    #Determing rolling statistics
+    rolmean = pd.rolling_mean(timeseries, window=12)
+    rolstd = pd.rolling_std(timeseries, window=12)
+
+    #Plot rolling statistics:
+    fig = plt.figure(figsize=(12, 8))
+    orig = plt.plot(timeseries, color='blue',label='Original')
+    mean = plt.plot(rolmean, color='red', label='Rolling Mean')
+    std = plt.plot(rolstd, color='black', label = 'Rolling Std')
+    plt.legend(loc='best')
+    plt.title('Rolling Mean & Standard Deviation')
+    plt.show()
+    
+    #Perform Dickey-Fuller test:
+    print 'Results of Dickey-Fuller Test:'
+    dftest = adfuller(timeseries, autolag='AIC')
+    dfoutput = pd.Series(dftest[0:4], index=['Test Statistic','p-value','#Lags Used','Number of Observations Used'])
+    for key,value in dftest[4].items():
+        dfoutput['Critical Value (%s)'%key] = value
+    print dfoutput
+    
+test_stationarity(occ)
