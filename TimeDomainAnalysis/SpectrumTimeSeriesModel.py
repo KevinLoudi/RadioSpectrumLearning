@@ -31,6 +31,7 @@ def cluster_bytime(level):
     return idx #np.transpose(idx)
     
 #clustering by time slice
+#this part would be astonishing time-consuming
 def calc_cs(lev):
     [row,col]=lev.shape
     tlevave=np.transpose(np.arange(col)*0.0)
@@ -50,6 +51,24 @@ def calc_cs(lev):
     tlevave=tlevave/row #the possibilty of being a channel
     return tlevmin,tlevave,tlevmax
 
+#fast channel-state decided via threshold
+def calc_cs_via_threshold(level):
+    cs=level*0
+    [times,freqs]=level.shape
+    #vital to remember to shape for row-wise max-find solution
+    tmpl=np.reshape(level,(times*freqs,1))
+    MaxL=max(tmpl)
+    MinL=min(tmpl)
+    #levels that 40% larger than the min-max gap is considered signal
+    thr=MinL+(MaxL-MinL)*0.2
+#    for i in np.arange(times):
+#        for j in np.arange(freqs):
+#            if level[i,j]>thr:
+#                cs[i,j]=1
+    cs=(level>thr)
+    return cs
+    
+
 #calculate time-occupy rate
 def calc_occ(cs):
     [times,freqs]=cs.shape
@@ -62,8 +81,12 @@ def calc_occ(cs):
 t=sio.loadmat('timestamp.mat')
 time=t["dateStamp"]
 l=sio.loadmat('level.mat')
-level=l["dataLevel"]
-plt.plot(level[:,100])
+level=l["dataLevel"].astype('float')
+#plt.plot(level[:,100])
 
-[lmin,lmean,lmax]=calc_cs(level)
+time=time[1:500]
+level=level[1:500,:]
 
+cs=calc_cs_via_threshold(level)
+occ=calc_occ(cs)
+plt.plot(occ)
