@@ -138,4 +138,20 @@ occ_scaled=preprocessing.scale(occ)
 plt.plot(timestamp,occ_scaled)
 test_stationarity(occ_scaled)
 
-occ_scaled['first_difference'] = occ_scaled - occ_scaled.shift(1)  
+#plot the acf, pacf and autocorrelation of series
+from pandas.tools.plotting import autocorrelation_plot
+print sm.stats.durbin_watson
+fig = plt.figure(figsize=(12,8))
+ax1 = fig.add_subplot(211)
+fig = sm.graphics.tsa.plot_acf(occ_scaled[13:], lags=40, ax=ax1)
+ax2 = fig.add_subplot(212)
+fig = sm.graphics.tsa.plot_pacf(occ_scaled[13:], lags=40, ax=ax2)
+autocorrelation_plot(occ_scaled)
+
+arma_mod20 = sm.tsa.ARMA(occ_scaled, (2,0)).fit()
+
+import csv
+occ_scaled_li=list(occ_scaled)
+with open("output.csv", "wb") as f:
+    writer = csv.writer(f)
+    for i in occ_scaled_li:
