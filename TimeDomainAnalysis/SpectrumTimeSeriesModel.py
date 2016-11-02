@@ -13,15 +13,6 @@ import scipy.io as sio
 import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans,vq
 
-#provide relative path
-dir = os.path.dirname(__file__)
-filename = os.path.join(dir, 'TestData/DayChannelState.csv')
-
-#load csv file for channelstate
-res=pd.read_csv(filename)
-#channel state in '0' or '1'
-cs=np.array(res).astype('float')
-
 #calculate channe-state via k-means
 def cluster_bytime(level):
     # computing K-Means with K = 2 (2 clusters)
@@ -78,6 +69,24 @@ def calc_occ(cs):
     for i in np.arange(times):
       occ[i]=sum(cs[i,:])
     return occ
+    
+#parse time string, only one-line array is feasible
+#putput time string as datetime in list
+from dateutil import parser
+def timestr_parser(time):
+    slotnum=time.size
+    dt=[]
+    for i in np.arange(slotnum):
+        dt.append(parser.parse(time[i,]))
+    return dt
+    
+##provide relative path
+#dir = os.path.dirname(__file__)
+#filename = os.path.join(dir, 'TestData/DayChannelState.csv')
+##load csv file for channelstate
+#res=pd.read_csv(filename)
+##channel state in '0' or '1'
+#cs=np.array(res).astype('float')
 
 #load more data
 t=sio.loadmat('timestamp.mat')
@@ -87,14 +96,13 @@ level=l["dataLevel"].astype('float')
 #plt.plot(level[:,100])
 
 #deducte computation
-time=time[0:200]
-level=level[0:200,:]
+#time=time[0:200]
+#level=level[0:200,:]
 
 #generate time-series of in-band occupy rates
-#cs=calc_cs_via_threshold(level)
+cs=calc_cs_via_threshold(level)
 occ=calc_occ(cs)
 #pd.to_csv('tmpdata.csv',header=False)
-plt.plot(occ)
 
 ####################
 #Modelling the trend of in-band occ
@@ -123,4 +131,6 @@ def test_stationarity(timeseries):
         dfoutput['Critical Value (%s)'%key] = value
     print dfoutput
     
+timestamp=timestr_parser(time)
+plt.plot(timestamp,occ)
 test_stationarity(occ)

@@ -35,7 +35,7 @@ function CSVFormatWriter(FileName,days)
   load(FileName);
   dateStamp=[];
   dataLevel=[];
-  for d=1:days
+  for d=7
       timeStamparr=MultiLevel.ByDay{d}.time;
       levelDataarr=MultiLevel.ByDay{d}.level;
       %add level data from the new day in matrix
