@@ -131,6 +131,11 @@ def test_stationarity(timeseries):
         dfoutput['Critical Value (%s)'%key] = value
     print dfoutput
     
+from sklearn import preprocessing
+
 timestamp=timestr_parser(time)
-plt.plot(timestamp,occ)
-test_stationarity(occ)
+occ_scaled=preprocessing.scale(occ)
+plt.plot(timestamp,occ_scaled)
+test_stationarity(occ_scaled)
+
+occ_scaled['first_difference'] = occ_scaled - occ_scaled.shift(1)  
