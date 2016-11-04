@@ -150,8 +150,3 @@ autocorrelation_plot(occ_scaled)
 
 arma_mod20 = sm.tsa.ARMA(occ_scaled, (2,0)).fit()
 
-import csv
-occ_scaled_li=list(occ_scaled)
-with open("output.csv", "wb") as f:
-    writer = csv.writer(f)
-    for i in occ_scaled_li:
