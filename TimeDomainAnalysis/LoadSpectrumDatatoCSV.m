@@ -5,30 +5,30 @@
 
 function LoadSpectrumDatatoCSV()
 %%Enabled when file read is needed
-%  %File Folder
-%  Path ='D:\\Code\\Matlab\\SpectrumLearning\\Data\\OriginData\\60-137\\%s\\02';
-%  %Critical Parameters
-%  StartF=60;
-%  StopF=137;
-%  StepF = 0.025;
-%   DayArray = {'20151216','20151217','20151218','20151219','20151220','20151221','20151222'};
-%  %DayArray = {'20151217'};
-%  
-%   %Read data day by day if the "Path" exist locally
-%  [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartF,StopF)
-% 
-%  MultiLevel.Info.StartFreq = StartF;
-%  MultiLevel.Info.StopFreq = StopF;
-%  MultiLevel.Info.StepFreq = StepF;
-%  cur_time = fix(clock);
-%  time_str = sprintf('%.4d-%.2d-%.2d:%.2d:%.2d:%.2d:%.2d',cur_time(1),cur_time(2),cur_time(3),cur_time(4),cur_time(5),cur_time(6));
-%  MultiLevel.Info.BuildTime = time_str;
-%  filename = sprintf('MultiLevel_%s_%s.mat', num2str(StartF),num2str(StopF));
-%  save(filename,'MultiLevel');
+ %File Folder
+ Path ='D:\\Code\\Matlab\\SpectrumLearning\\Data\\OriginData\\60-137\\%s\\02';
+ %Critical Parameters
+ StartF= 1710;%60;
+ StopF=1740;%137;
+ StepF = 0.025;
+  DayArray = {'20151216','20151217','20151218','20151219','20151220','20151221','20151222'};
+ %DayArray = {'20151217'};
+ 
+  %Read data day by day if the "Path" exist locally
+ [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartF,StopF)
+
+ MultiLevel.Info.StartFreq = StartF;
+ MultiLevel.Info.StopFreq = StopF;
+ MultiLevel.Info.StepFreq = StepF;
+ cur_time = fix(clock);
+ time_str = sprintf('%.4d-%.2d-%.2d:%.2d:%.2d:%.2d:%.2d',cur_time(1),cur_time(2),cur_time(3),cur_time(4),cur_time(5),cur_time(6));
+ MultiLevel.Info.BuildTime = time_str;
+ filename = sprintf('MultiLevel_%s_%s.mat', num2str(StartF),num2str(StopF));
+ save(filename,'MultiLevel');
 
  %Write MultiLevel Data and Time Stamps into CSV file
- filename='MultiLevel_60_137.mat';
- CSVFormatWriter(filename,7);
+%  filename='MultiLevel_60_137.mat';
+CSVFormatWriter(filename,7);
 end
 
 function CSVFormatWriter(FileName,days)
