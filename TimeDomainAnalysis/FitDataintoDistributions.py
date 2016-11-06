@@ -69,6 +69,7 @@ size=y.size
 x=np.arange(size)
 #double-peed often indicate the existence of spectrum use
 h = plt.hist(y, bins=range(size), color='w')
+plt.show()
 
     #for dist_name in dist_names:
     #getattr(object, name[, default]) 
@@ -82,7 +83,7 @@ dist=getattr(scipy.stats,dist_name)
 param = dist.fit(y)
 pdf_fitted = dist.pdf(x, *param[:-2], loc=param[-2], scale=param[-1]) * size
 plt.plot(pdf_fitted, label=dist_name)
-plt.xlim(0,799)
+plt.xlim(0,size-1)
 print("Fit finished the ",dist_name)
 
 plt.legend(loc='upper right')
