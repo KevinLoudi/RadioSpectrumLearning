@@ -75,6 +75,7 @@ plt.show()
     #getattr(object, name[, default]) 
     #getattr(x, 'foobar') is equivalent to x.foobar
     #dist = getattr(scipy.stats, dist_name)
+    
     #maximum likelihood estimation of distribution parameters
     #fit(self, data, *args, **kwds) 
     #Return MLEs for shape, location, and scale parameters from data.
