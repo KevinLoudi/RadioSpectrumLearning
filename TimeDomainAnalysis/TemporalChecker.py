@@ -31,25 +31,31 @@ import numpy as np
 
 # Backpropagation, in its simplest form, measures statistics like this to make a model.
 # sigmoid function
+#A sigmoid function maps any value to a value between 0 and 1
+#We use it to convert numbers to probabilities
+# If the sigmoid's output is a variable "out", then the derivative is simply out * (1-out)
+#as the slope of the sigmoid function at a given point 
 def nonlin(x,deriv=False):
     if(deriv==True):
         return x*(1-x)
     return 1/(1+np.exp(-x))
     
 # input dataset
+# Each column corresponds to one of our input nodes
 X = np.array([  [0,0,1],
                 [0,1,1],
                 [1,0,1],
                 [1,1,1] ])
     
-# output dataset            
+# output dataset==> output node   
+# generated the dataset horizontally (with a single row and 4 columns) for space       
 y = np.array([[0,0,1,1]]).T
 
 # seed random numbers to make calculation
 # deterministic (just a good practice)
 np.random.seed(1)
 
-# initialize weights randomly with mean 0
+# initialize weights randomly with mean 0 ==>"synapse zero"
 # first layer of weigths, connecting l0 and l1
 syn0 = 2*np.random.random((3,1)) - 1
 
@@ -57,9 +63,14 @@ for iter in xrange(10000):
 
     # forward propagation
     l0 = X #first layer of the network
+    
+    #make adjustment
+    #(4 x 3) dot (3 x 1) = (4 x 1) 
+    #Each output corresponds with the network's guess for a given input
     l1 = nonlin(np.dot(l0,syn0)) #martix-matrix multiplication
 
     # how much did we miss?
+    # numbers reflecting how much the network missed
     l1_error = y - l1 #second layer of the network
 
     # multiply how much we missed by the 
