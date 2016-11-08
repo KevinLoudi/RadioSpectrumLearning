@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Nov 06 10:52:27 2016
-Propose: Apply ANN on spectrum power prediction
+Propose: Apply ANN to spectrum hole prediction
 @author: kevin
 Environment: Python 2.7
 """
@@ -52,9 +52,9 @@ cs=(level_scaled_part>thre)
 #calculate time-occupy rate
 def calc_occ(cs):
     [times,freqs]=cs.shape
-    occ=np.arange(times)*0
+    occ=np.zeros([times,1])
     for i in np.arange(times):
-      occ[i]=sum(cs[i,:])/freqs
+      occ[i,0]=sum(cs[i,:])/freqs
     return occ
     
 occ=calc_occ(cs)
@@ -62,28 +62,42 @@ occ=calc_occ(cs)
 #one-step predictor based on BP-ANN
 #alldata is expected to be a one-line array,
 #steps indicate how many steps is used in trainning
-def BP_ANN_predictor(alldata,trainpart_rate=1,steps=5):
-    pre=0
-    leng=alldata.size
-    #shape data
-    train_leng=int(leng*trainpart_rate)
-#    train_set=np.zeros(((train_leng-steps),steps))
-#    test_set=np.zeros((train_leng,1))
-    train_set=[]
-    test_set=[]
+def rolling_window(seq, window_size):
+    it = iter(seq)
+    win = [it.next() for cnt in xrange(window_size)] # First window
+    yield win
+    for e in it: # Subsequent windows
+        win[:-1] = win[1:]
+        win[-1] = e
+        yield win
 
-    train_ix_str=0
-    train_ix_end=steps
-    row_ix=0
-    while(train_ix_end<train_leng-1):
-#        train_set[:,row_ix]=alldata[train_ix_str:train_ix_end,1].transpose()
-#        test_set[:,row_ix]=alldata[train_ix_end+1,1].transpose()
-        train_set.append(alldata[train_ix_str:train_ix_end-1,0].transpose())
-        test_set.append(alldata[train_ix_end,0].transpose())
-        #shift 1 by row 
-        train_ix_str=train_ix_str+1
-        train_ix_end=train_ix_end+1
-        row_ix=row_ix+1
-    return pre#[train_set,test_set]#pre
+in_set=[]
+occ_seq=np.concatenate(occ)
+for w in rolling_window(occ_seq, 5):
+    in_set.append(w)
+in_set.pop() #del in_set[-1] #[1956,1]
+in_set=np.asarray(in_set)
+out_set=occ[5:,].T
+
+def nonlin(x,deriv=False):
+    if(deriv==True):
+        return x*(1-x)
+    return 1/(1+np.exp(-x))
     
-a=BP_ANN_predictor(occ)
+def BP_ANN_predictor(x,y):
+    np.random.seed(1)
+    syn0 = 2*np.random.random((5,1)) - 1
+
+    for iter in xrange(10000):
+        l0 = x #first layer of the network
+        l1 = nonlin(np.dot(l0,syn0)) #martix-matrix multiplication
+        l1_error = y - l1 #second layer of the network
+        l1_delta = l1_error * nonlin(l1,True) #most of the secret lay in here
+        syn0 += np.dot(l0.T,l1_delta)
+    print "Output After Training:"
+    print l1
+    return
+
+BP_ANN_predictor(in_set,out_set)
+    
+

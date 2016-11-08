@@ -6,29 +6,70 @@ Propse: tmporal folder for code validation
 Environment: Python 2.7
 """
 
-#describe the inner workings of backpropagation
+#MATLAB's array-creation function, vector
 import numpy as np
-#A neural network trained with backpropagation is attempting to use input to predict output.
-#Inputs   	Output 
-#0	0	1	0
-#1	1	1	1
-#1	0	1	1
-#0	1	1	0
-#We could solve this problem by simply measuring statistics between the input values and the output values.
-#
-#Simplest way
-#X = np.array([ [0,0,1],[0,1,1],[1,0,1],[1,1,1] ])
-#y = np.array([[0,1,1,0]]).T
-#syn0 = 2*np.random.random((3,4)) - 1
-#syn1 = 2*np.random.random((4,1)) - 1
-#for j in xrange(60000):
-#    l1 = 1/(1+np.exp(-(np.dot(X,syn0))))
-#    l2 = 1/(1+np.exp(-(np.dot(l1,syn1))))
-#    l2_delta = (y - l2)*(l2*(1-l2))
-#    l1_delta = l2_delta.dot(syn1.T) * (l1 * (1-l1))
-#    syn1 += l1.T.dot(l2_delta)
-#    syn0 += X.T.dot(l1_delta)
+a=np.array(([0,1],[2,3]))
 
+b=np.concatenate(a)
+print(b)
+
+#import numpy as np
+#
+#A = np.array([[0, 1, 2], [0, 2, 0]])
+#X = np.array([[0, 1, 2], [1, 2, 0], [2, 1, 2], [3, 2, 0]])
+#A = np.vstack((A, X[X[:,0] < 3]))
+#print A
+#
+import numpy as np
+def rolling_window(seq, window_size):
+    it = iter(seq)
+    win = [it.next() for cnt in xrange(window_size)] # First window
+    yield win
+    for e in it: # Subsequent windows
+        win[:-1] = win[1:]
+        win[-1] = e
+        yield win
+        
+in_d = np.arange(6)
+for w in rolling_window(in_d, 3):
+    print w
+#
+
+##
+#def chunks(l, n):
+#    """Yield successive n-sized chunks from l."""
+#    for i in range(0, len(l), n):
+#        yield l[i:i + n]
+#
+#import pprint
+#pprint.pprint(list(chunks(range(10, 75), 10)))
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##describe the inner workings of backpropagation
+#import numpy as np
+##A neural network trained with backpropagation is attempting to use input to predict output.
+##Inputs   	Output 
+##0	0	1	0
+##1	1	1	1
+##1	0	1	1
+##0	1	1	0
+##We could solve this problem by simply measuring statistics between the input values and the output values.
+##
+##Simplest way
+##X = np.array([ [0,0,1],[0,1,1],[1,0,1],[1,1,1] ])
+##y = np.array([[0,1,1,0]]).T
+##syn0 = 2*np.random.random((3,4)) - 1
+##syn1 = 2*np.random.random((4,1)) - 1
+##for j in xrange(60000):
+##    l1 = 1/(1+np.exp(-(np.dot(X,syn0))))
+##    l2 = 1/(1+np.exp(-(np.dot(l1,syn1))))
+##    l2_delta = (y - l2)*(l2*(1-l2))
+##    l1_delta = l2_delta.dot(syn1.T) * (l1 * (1-l1))
+##    syn1 += l1.T.dot(l2_delta)
+##    syn0 += X.T.dot(l1_delta)
+#
 # Backpropagation, in its simplest form, measures statistics like this to make a model.
 # sigmoid function
 #A sigmoid function maps any value to a value between 0 and 1
