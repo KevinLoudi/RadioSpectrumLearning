@@ -51,7 +51,8 @@ level_part=select_part_by_freq(level,startf,stepf,stopf,1710,1730,"col")
 #and each return the window-inside part
 def sliding_window_otsu(level,win_rowsize,win_colsize,move_step):
     [rownum,colnum]=level.shape
-    channelstatus=level*0
+    channelstatus=np.ndarray((rownum,colnum),float)*0
+    cs_inside=np.ndarray((win_rowsize,win_colsize),float)*0
     if(win_rowsize>=rownum)and(win_colsize>=colnum)and(move_step>=min(rownum,colnum)):
         print("too large step")
         return -1
@@ -62,29 +63,39 @@ def sliding_window_otsu(level,win_rowsize,win_colsize,move_step):
             win_inside=level[str_rowix:(str_rowix+win_rowsize),str_colix:(str_colix+win_rowsize)]
             #calculate threshold for each window
             threshold_inside=filters.threshold_otsu(win_inside)
-            cs_inside=(win_inside>threshold_inside)
-            channelstatus[str_rowix:(str_rowix+win_rowsize),str_colix:(str_colix+win_rowsize)]+cs_inside;
-            win_ix=win_ix+1
+            cs_inside=(win_inside>threshold_inside)*1
+            channelstatus[str_rowix:(str_rowix+win_rowsize),str_colix:(str_colix+win_rowsize)]+=cs_inside;
+            win_ix+=1
+    #make a decision, under how many windows' support can an element regard 
+    #as signal
+    channelstatus=(channelstatus>1)*1
     print("create",win_ix," temporal windows") 
     return channelstatus              
     
 #calculation
-val = filters.threshold_otsu(level_part)
-cs = sliding_window_otsu(level_part,100,100,20)
-hist, bins_center = exposure.histogram(level_part)
+#cs->val
+cs = sliding_window_otsu(level_part,20,20,5)
+plt.imshow(cs)
+plt,savefig('cs')
+#fig=plt.imshow(cs,cmap='gray',interpolation='nearest')
+#fig.show()
+#fig.savefig('cs.png')
+
+#val = filters.threshold_otsu(cs)
+#hist, bins_center = exposure.histogram(cs)
 
 
 #plot 
-plt.figure(figsize=(9, 4))
-plt.subplot(131)
-plt.imshow(level_part, cmap='gray', interpolation='nearest')
-plt.axis('off')
-plt.subplot(132)
-plt.imshow(level_part < val, cmap='gray', interpolation='nearest')
-plt.axis('off')
-plt.subplot(133)
-plt.plot(bins_center, hist, lw=2)
-plt.axvline(val, color='k', ls='--')
-
-plt.tight_layout()
-plt.show()
+#plt.figure(figsize=(9, 4))
+#plt.subplot(131)
+#plt.imshow(cs, cmap='gray', interpolation='nearest')
+#plt.axis('off')
+#plt.subplot(132)
+#plt.imshow(cs < val, cmap='gray', interpolation='nearest')
+#plt.axis('off')
+#plt.subplot(133)
+#plt.plot(bins_center, hist, lw=2)
+#plt.axvline(val, color='k', ls='--')
+#
+#plt.tight_layout()
+#plt.show()
