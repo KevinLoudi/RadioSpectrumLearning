@@ -47,6 +47,9 @@ starttime=0
 stoptime=50
 level_part=select_part_by_freq(level,startf,stepf,stopf,1710,1730,"col")
 
+#recursive threshold to subtract signal part for noise/signal decision making
+
+
 #a sliding window that will walk through all elements of level,
 #and each return the window-inside part
 def sliding_window_otsu(level,win_rowsize,win_colsize,move_step):
@@ -77,6 +80,63 @@ def sliding_window_otsu(level,win_rowsize,win_colsize,move_step):
 cs = sliding_window_otsu(level_part,20,20,5)
 plt.imshow(cs,cmap='gray',interpolation='nearest')
 plt.savefig('cs.png',dpi=300,facecolor='w',edgecolor='w')
+plt.hist(level_part[0,:],bins='auto')
+
+#test ROHT algorithm
+#t_tim=50
+#t_frq=100
+#data_part=level_part[0:t_tim,0:t_frq]
+#data_vec=np.reshape(data_part,(t_tim*t_frq))
+#plt.hist(data_vec,bins='auto')
+#d_mean=np.mean(data_vec)
+#d_std=np.std(data_vec)
+##z_alph=1.645 as 95% probability 
+#z_alph=1.645
+#d_cutpoint=d_mean+z_alph*d_std #/np.sqrt(t_tim*t_frq) 
+#data_list=data_vec.tolist()
+##substract the signal part with 95% confidence
+#data_list_filter=filter(lambda x: x<d_cutpoint, data_list) 
+
+#recursive design
+def recursive_oneside_hypthesis_testing(data_vec,max_ix):
+   z_alph=1.645 #95% confidence
+   d_mean=list()
+   d_std=list()
+   d_cutpoint=list()
+   for ix in np.arange(max_ix):
+       d_mean.append(np.mean(data_vec))
+       d_std.append(np.std(data_vec))
+       d_cutpoint.append(d_mean[ix]+z_alph*d_std[ix])
+       #subtract the signal part with 95% confidence
+       data_list=data_vec.tolist()
+       data_list_filter=filter(lambda x: x<d_cutpoint[ix], data_list)
+       data_vec=np.asarray(data_list_filter)
+       print ix
+       print d_cutpoint[ix]
+       #if(ix>0): 
+           #if((d_std[ix]-d_std[ix-1])<0.2):
+               #return [d_std,d_mean,d_cutpoint,ix]
+   return [d_std,d_mean,d_cutpoint,ix]
+    
+t_tim=20
+t_frq=20
+data_part=level_part[0:t_tim,0:t_frq]
+data_vec=np.reshape(data_part,(t_tim*t_frq))
+plt.hist(data_vec,bins='auto')
+
+d_mean=list()
+d_std=list()
+d_cutpoint=list()
+[d_std,d_mean,d_cutpoint,ix]=recursive_oneside_hypthesis_testing(data_vec,100)
+threshold_ostu=filters.threshold_otsu(data_part)
+
+print("OSTU:",threshold_ostu)
+print("ROHT:",d_cutpoint[ix])
+
+
+    
+
+    
 
 
 ##doc of savefig
