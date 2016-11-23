@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Nov 17 09:20:35 2016
-Propose: Recursive Thresholding techiques for spectrum signal/noise decision
+Propose: Recursive Thresholding techiques for spectrum signal/noise decision,
+and introduce image segmentation method to solve the time-frequency 2-D threshold
+making problem
 @author: kevin
 Environment: Python 2.7
 """
@@ -118,12 +120,49 @@ def recursive_oneside_hypthesis_testing(data_vec,max_ix):
                #return [d_std,d_mean,d_cutpoint,ix]
    return [d_std,d_mean,d_cutpoint,ix]
 
-def sliding_window_ROHT(more_data,win_tsize,win_fsize,move_step):
+#distribution type(z_alph), window-size(uniform noise, double-peak),
+#def sliding_window_ROHT(more_data,win_tsize,win_fsize,move_step):
     
-    
-t_tim=10
-t_frq=100
+######1-D curve
+t_tim=400
+t_frq=400
 data_part=level_part[0:t_tim,0:t_frq]
+level_splic_time=level_part[0,:]
+plt.plot(level_splic_time)
+level_splic_freq=level_part[:,10]
+plt.plot(level_splic_freq)
+plt.savefig('level_time_slice.png')
+
+#parse date time string
+timestr=time[0]
+from datetime import datetime
+timeix=datetime.strptime(timestr,'%d-%b-%Y %H:%M:%S') #like '15-Dec-2015 19:00:00' 
+    
+######2-D image  
+
+#scale the loaded data into range [0,255]
+from sklearn import preprocessing
+min_max_scaler = preprocessing.MinMaxScaler()
+#give an explicit range
+min_max_scaler.feature_range=(0,255)
+data_image = min_max_scaler.fit_transform(data_part)
+#filter
+n=20
+l=100
+im = filters.gaussian_filter(data_image, sigma=l / (4. * n))
+data_signal = im > im.mean()
+plt.imshow(data_image,cmap='gray', interpolation='nearest')
+plt.savefig('level_image.png')
+
+from skimage import measure
+#Label all connected components
+all_labels = measure.label(data_signal)
+blobs_labels = measure.label(data_signal, background=0)
+plt.imshow(blobs_labels)
+#Label only foreground connected components:
+blobs_labels = measure.label(blobs, background=0)    
+
+#################
 data_vec=np.reshape(data_part,(t_tim*t_frq))
 plt.hist(data_vec,bins='auto')
 
@@ -136,12 +175,19 @@ threshold_ostu=filters.threshold_otsu(data_part)
 print("OSTU:",threshold_ostu) #can distguish more weak signal
 print("ROHT:",d_cutpoint[ix])
 
-#distribution type(z_alph), window-size(uniform noise, double-peak),
-# 
 
-    
+#applying image segementation method in threshold-making
+check = np.zeros((9, 9))
+check[::2, 1::2] = 1
+check[1::2, ::2] = 1
+import matplotlib.pyplot as plt
+plt.imshow(check, cmap='gray', interpolation='nearest') 
 
-    
+from skimage import io
+import os
+filename = os.path.join(skimage.data_dir, 'camera.png')
+camera = io.imread(filename)
+
 
 
 ##doc of savefig
