@@ -29,10 +29,53 @@ class DataLoader(object):
             return [time,level]
         else:
             return -1
+    
+    #load data in a form of figure
+    def plot_spectrum_by_time(self,x,y):
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        #here only plot one figure
+        fig.suptitle('spectrum time', fontsize=14, fontweight='bold')
+        ax = fig.add_subplot(111)
+        fig.subplots_adjust(top=0.85)
+        ax.set_title('one')
+        ax.set_xlabel('time')
+        ax.set_ylabel('power')
+        ax.plot(x,y)
+        #set scope for demo
+        ax.axis([0,len(x)+3,0,max(y)])
+        plt.show()
+        return 0 
         
-
-loader=DataLoader()  
-print loader.count 
-[time,level]=loader.loadmat()   
+    def plot_spectrum_by_freq(self,x,y):
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        #here only plot one figure
+        fig.suptitle('spectrum freq', fontsize=14, fontweight='bold')
+        ax = fig.add_subplot(111)
+        fig.subplots_adjust(top=0.85)
+        ax.set_title('two')
+        ax.set_xlabel('freq')
+        ax.set_ylabel('power')
+        ax.plot(x,y)
+        #set scope for demo
+        ax.axis([0,len(x)+3,0,max(y)])
+        plt.show()
+        return 0 
+        
+    def plot_waterfall(self,data):
+        import matplotlib.pyplot as plt
+        import pylab as pl
+        im = plt.matshow(data, cmap=pl.cm.hot, aspect='auto')
+        plt.colorbar(im)
+        plt.show()
+        
+    def plot_hist(self,data):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        [row,col]=data.shape
+        data_vec=np.reshape(data,row*col)
+        plt.hist(data_vec,bins='auto')
+        return "histgram plotted"
 
 
