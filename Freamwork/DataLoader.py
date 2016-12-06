@@ -73,8 +73,7 @@ class DataLoader(object):
     def plot_hist(self,data):
         import numpy as np
         import matplotlib.pyplot as plt
-        [row,col]=data.shape
-        data_vec=np.reshape(data,row*col)
+        data_vec=np.reshape(data,data.size)
         plt.hist(data_vec,bins='auto')
         return "histgram plotted"
 

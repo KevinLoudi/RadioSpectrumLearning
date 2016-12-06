@@ -66,8 +66,48 @@ class DataProcess(object):
             ix+=1
         print("Results like ",time_num[0])
         return time_num
+        
+        
+class ChannelStatus(object):
+    maxx=1.0
+    minn=0.0
+    threshold=0.5
+    
+    def __init__(self,maxx=1.0,minn=0.0,threshold=0.5):
+        self.maxx=maxx
+        self.minn=minn
+        self.threshold=threshold
+    
+    def manual_set_threshold(self,threshold=0.5):
+        self.threshold=threshold
+        return 0
 
+    def ostu_set_threshold(self,data):
+        import numpy as np
+        try:
+            from skimage import filters
+        except ImportError:
+            from skimage import filter as filters
+        
+        if(not isinstance(data,np.ndarray)):
+            return -999
+        data_vec=np.reshape(data,data.size)
+        threshold_ostu=filters.threshold_otsu(data_vec)
+        print("threshold_ostu: ",threshold_ostu)
+        self.threshold=threshold_ostu
+        return threshold_ostu
+    
+    #generate random numbers in uniform distribution
+    def random_vec_standard(self,mean,std,length):
+        import numpy as np
+        vec=np.random.normal(mean,std,length) #[low high size]
+        return vec
 
-
+    #generate a vector of random number in uniform distribution,
+    #that is between [low,high]
+    def random_vec_uniform(self,low,high,length):
+        import numpy as np
+        vec=np.random.uniform(low, high,length) #[low high size]
+        return vec
 
         
