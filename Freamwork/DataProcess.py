@@ -98,16 +98,16 @@ class ChannelStatus(object):
         return threshold_ostu
     
     #generate random numbers in uniform distribution
-    def random_vec_standard(self,mean,std,length):
+    def random_vec_standard(self,low,high,length):
         import numpy as np
-        vec=np.random.normal(mean,std,length) #[low high size]
+        vec=np.random.normal(low,high,length) #[low high size]
         return vec
 
     #generate a vector of random number in uniform distribution,
     #that is between [low,high]
     def random_vec_uniform(self,low,high,length):
         import numpy as np
-        vec=np.random.uniform(low, high,length) #[low high size]
+        vec=np.random.uniform(low,high,length) #[low high size]
         return vec
 
         
