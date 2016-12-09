@@ -57,15 +57,14 @@ class Simulator(object):
             return rcs    
             
         #Num:source number, L: total time length
-        def Multi_signal_generator(Num,L):
+        def Multi_signal_generator(Num,L,occur_time):
             power_arr=np.arange(15,45,30.0/Num)    
             s_list=[]
             rcs_list=[]
-            L=10000
             #signal source 1
             ix=0
             while(ix<Num):
-                rcs_list.append(random_visit(L,10))
+                rcs_list.append(random_visit(L,occur_time))
                 s_list.append(rcs_list[ix]*(np.random.normal(power_arr[ix],power_arr[ix]/10,L)))
                 #plt.plot(s)
                 ix+=1
@@ -127,7 +126,30 @@ class Simulator(object):
             err=np.random.normal(0.0,std,len(x))
             y=r*x+err
             return y
-
+            
+        #freqency length, time span, visit time of each signal source, time corre,noise parameters
+        def generate_spectrum(freqlen=1000,timelen=10,visit_time=3,time_corr=0.98,noise_mean=10,noise_std=2):
+            L=freqlen #length of each fream of spectrum
+            T=timelen #signal source number
+            s=Multi_signal_generator(T,L,visit_time)
+            ss=np.zeros(L)
+            for ix in np.arange(len(s)):
+                ss=ss+s[ix]
+            n=uniform_noise_generator(noise_mean,noise_std,L)
+            y=ss+n #signal and noise
+            yt=np.zeros([T,L])
+            ix=0
+            tmp=ss
+            while(ix<T):
+                yt[ix,:]=tmp
+                tmp=correlated_value(tmp,time_corr)
+                ix+=1
+            import matplotlib.pyplot as plt
+            import pylab as pl
+            im = plt.matshow(yt, cmap=pl.cm.hot, aspect='auto')
+            plt.colorbar(im)
+            plt.show()
+            return yt
              
     #signal simulation continuing 'times' time, each time with 'slot' slots 
        def Generate_random_signal_with_random_hole(self,times,slot):
@@ -242,7 +264,6 @@ class Simulator(object):
         plt.show()
         
             
-        
 #        import numpy as np
 #        import matplotlib.pyplot as plt
 #        

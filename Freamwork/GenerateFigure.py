@@ -38,5 +38,21 @@ np.corrcoef(x,y)
 import matplotlib.pyplot as plt
 plt.scatter(m[0], m[1])
 
+
+#another method
+def correlated_value(x,r):
+    r2=r**2
+    var=1-r2
+    std=np.sqrt(var)
+    err=np.random.normal(0,std,len(x))
+    y=r*x+err
+    return y
+    
+x=np.random.normal(10,2,10000)
+y=correlated_value(x,0.95)
+np.corrcoef(x,y)
+plt.plot(x)
+plt.plot(y)
+
         
         
