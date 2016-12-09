@@ -118,6 +118,15 @@ class Simulator(object):
         def calc_p_fa(thre,n_std,obs_size):
             import numpy as np
             return qfunc((thre-obs_size*n_std**2)/(np.sqrt(2*obs_size*n_std**4)))
+        
+        #generate a random array y, y is related to x and have a correlation-rate of r
+        def correlated_value(x,r):
+            r2=r**2
+            var=1-r2
+            std=np.sqrt(var)
+            err=np.random.normal(0.0,std,len(x))
+            y=r*x+err
+            return y
 
              
     #signal simulation continuing 'times' time, each time with 'slot' slots 
@@ -135,14 +144,14 @@ class Simulator(object):
         import numpy as np
         import matplotlib.pyplot as plt
         #parameters for signal and noise
-#        times=20
-#        slot=100
-#        n_mean=10.0 
-#        n_std=2.0
-#        s_mean=40.0
-#        s_std=5.0
-#        vac_rate=0.5
-#        snr=-10.0 
+        times=20
+        slot=100
+        n_mean=10.0 
+        n_std=2.0
+        s_mean=40.0
+        s_std=5.0
+        vac_rate=0.5
+        snr=-10.0 
         
         #generate signal with different strength
         L=10000
@@ -164,6 +173,10 @@ class Simulator(object):
         y_mean=np.mean(yy)
         #provide a decision threshold through histgram
         #use global threshold
+        try:
+            from skimage import filters
+        except ImportError:
+            from skimage import filter as filters
         thre=filters.threshold_otsu(yy)
         print("threshold_ostu: ",thre)
         cs_est=np.zeros(len(yy))
@@ -210,6 +223,25 @@ class Simulator(object):
         obs_len=20
         thre=(qfuncinv(P_fa)*np.sqrt(2*obs_len)+obs_len)*n_std_est
         print(thre)
+        
+        
+        ##generate another array that is related to ss        
+        time_num=30
+        yyy=np.zeros([time_num,len(yy)])
+        ix=0
+        tmp=ss
+        while(ix<channel_num):
+            yyy[ix,:]=tmp
+            tmp=correlated_value(tmp,0.95)
+            ix+=1
+            
+        import matplotlib.pyplot as plt
+        import pylab as pl
+        im = plt.matshow(yyy, cmap=pl.cm.hot, aspect='auto')
+        plt.colorbar(im)
+        plt.show()
+        
+            
         
 #        import numpy as np
 #        import matplotlib.pyplot as plt
