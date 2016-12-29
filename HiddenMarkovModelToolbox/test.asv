@@ -1,0 +1,8 @@
+%test for all build-in method
+clear; clc; clf;
+d = 3; %internal state numbers
+k = 2; %visible 
+n = 100; %l
+[x, model] = hmmRnd(d, k, n);
+figure(1);
+plot(x,'b');
