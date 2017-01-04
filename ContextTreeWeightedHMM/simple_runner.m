@@ -1,7 +1,6 @@
 % A simple hands-on tutorial 
 % Browse the code to get the basics of how-to utilize this VMM tool
 
-
 % 1. defining sequence and its alphabet
 seq = 'abracadabra';
 ab = alphabet('abracadabra');
