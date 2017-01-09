@@ -3,3 +3,8 @@ Freamwork/TestData/timestamp.mat
 *.mat
 *.yml
 *.pdf
+*.png
+*.jpg
+*.sh
+SpectrumLabelling/doc/instructions.html
+*.gz
