@@ -8,3 +8,4 @@ Freamwork/TestData/timestamp.mat
 *.sh
 SpectrumLabelling/doc/instructions.html
 *.gz
+*.asv
