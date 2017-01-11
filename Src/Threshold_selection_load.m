@@ -6,13 +6,11 @@
 %  Environment: Matlab R2015b
 %  Version: v1.0 (Last Modification Date: 11th January, 2017)
 % ****************************************************
-function thresh=Threshold_selection()
+function thresh=Threshold_selection_load(r)
     %load data
-    level=Load_data();
+    level=r;
 
     %Global image threshold selection
     thresh = multithresh(level,10);
     %imwrite(level,'../Data/level.jpg');
 end
-
-
