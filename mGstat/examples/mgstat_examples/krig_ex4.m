@@ -1,5 +1,6 @@
 rand('seed',1)
 ndata=10;
+%randonly set pos-value
 pos_known=rand(ndata,1)*10;
 val_known=randn(ndata,1); % 
 V='1 Sph(.2)';      % Select variogram model

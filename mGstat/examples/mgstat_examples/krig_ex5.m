@@ -3,7 +3,9 @@ ndata=10;
 pos_known=rand(ndata,1)*10;
 val_known=randn(ndata,1); % 
 V='1 Sph(.2)';      % Select variogram model
+%set positions to be estimated
 pos_est=[0:.1:10]';
+%set neighborhood
 clear options;options.max=4;
 [d_est_ok,d_var_ok]=krig(pos_known,val_known,pos_est,V,options);
 options.mean=2;
