@@ -47,6 +47,10 @@ plot(vv, separableModel)
 library(sp)
 library(spacetime)
 library(gstat)
+demo(stkrige)
+
+
+
 data(meuse)
 coordinates(meuse) = ~x+y
 data(meuse.grid)
