@@ -1,7 +1,7 @@
 
 %Read all data sets from an argus file
 function [Info,Data]=ArgusReader(Path,StartF,StopF,Info,Data)
- len = (StopF-StartF)/0.025;
+ len = (StopF-StartF)/0.025+1;
  fid = fopen(Path);
  jump_distance = 0;
  fseek(fid,jump_distance,'bof');

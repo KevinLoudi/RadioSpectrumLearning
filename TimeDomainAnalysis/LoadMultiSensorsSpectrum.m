@@ -1,41 +1,51 @@
-% Created on Mon Oct 24 13:25:45 2016
-% Propose: Load Spectrum Data from Binary Files
+% Created on Mon 25th Feb 13:25:45 2017
+% Propose: Load mutiply sensors' Spectrum Data from Binary Files
 % Enviroment: Matlab 2015b
 % @auththor: kevin
 
-function LoadSpectrumDatatoCSV()
+function LoadMultiSensorsSpectrum()
 %%Enabled when file read is needed
  %File Folder
- display('Load one sensor''s data in a given  frequency range.');
+ display('Load multiply sensors'' data of a given frequency range.');
  display('Step1: set file path and data load parameters....');
- Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
- %Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
- %Critical Parameters
- StartF= 1720;%60;
- StopF=1720;%137;
- StepF = 0.025;
- DayArray = {'20151216','20151217','20151218','20151219','20151220','20151221','20151222'};
+ SensorIds={'02','03'};
+ Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\60-137\\%s\\';
+ Def_path=Path;
  
- %DayArray = {'20151217'};
+display('Step2: read file and load data....');
+ for i=1:length(SensorIds)
+   display('=====================');
+   display('deal with a sensor....');
+   Path=Def_path;
+   Path=strcat(Path, SensorIds{i});
+   
+   %Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
+    %Critical Parameters
+    StartF= 101700;%kHz
+    StopF=101700;%
+    StepF = 25;
+    DayArray = {'20151216','20151217','20151218','20151219','20151220','20151221','20151222'};
+    
+    %Read data day by day if the "Path" exist locally
+    
+    [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartF,StopF);
  
-  %Read data day by day if the "Path" exist locally
-  display('Step2: read file and load data....');
- [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartF,StopF);
- 
- display('Step3: shape data and cut off....');
- MultiLevel.Info.StartFreq = StartF;
- MultiLevel.Info.StopFreq = StopF;
- MultiLevel.Info.StepFreq = StepF;
- cur_time = fix(clock);
- time_str = sprintf('%.4d-%.2d-%.2d:%.2d:%.2d:%.2d:%.2d',cur_time(1),cur_time(2),cur_time(3),cur_time(4),cur_time(5),cur_time(6));
- MultiLevel.Info.BuildTime = time_str;
- filename = sprintf('MultiLevel_%s_%s.mat', num2str(StartF),num2str(StopF));
- save(filename,'MultiLevel');
+    display('shape data and cut off....');
+    MultiLevel.Info.StartFreq = StartF;
+    MultiLevel.Info.StopFreq = StopF;
+    MultiLevel.Info.StepFreq = StepF;
+    cur_time = fix(clock);
+    time_str = sprintf('%.4d-%.2d-%.2d:%.2d:%.2d:%.2d:%.2d',cur_time(1),cur_time(2),cur_time(3),cur_time(4),cur_time(5),cur_time(6));
+    MultiLevel.Info.BuildTime = time_str;
+    filename = sprintf('MultiLevel_%s_%s.mat', num2str(StartF),num2str(StopF));
+    save(filename,'MultiLevel');
 
- %Write MultiLevel Data and Time Stamps into CSV file
-%  filename='MultiLevel_60_137.mat';
-display('Step4: save data in a unit pack....');
-CSVFormatWriter(filename,7);
+    %Write MultiLevel Data and Time Stamps into CSV file
+    %  filename='MultiLevel_60_137.mat';
+    display('save data in a unit pack....');
+    CSVFormatWriter(filename,7);
+ end
+ disp('Step3: successfully output dataset!!!');
 end
 
 function CSVFormatWriter(FileName,days)
@@ -49,7 +59,8 @@ function CSVFormatWriter(FileName,days)
       dataLevel=[dataLevel;levelDataarr];
       for i = 1:length(timeStamparr)
         tmpTime=timeStamparr(i,1:12);
-        tmpDataVector=[str2num(tmpTime(1:4)),str2num(tmpTime(5:6)),str2num(tmpTime(7:8)),str2num(tmpTime(9:10)),str2num(tmpTime(11:12)),0];
+        tmpDataVector=[str2num(tmpTime(1:4)),str2num(tmpTime(5:6)),str2num(tmpTime(7:8)),...
+            str2num(tmpTime(9:10)),str2num(tmpTime(11:12)),0];
         %add time stamp of the new day/timesolts
         dateStamp=[dateStamp; datestr(tmpDataVector)];
      end
@@ -57,10 +68,13 @@ function CSVFormatWriter(FileName,days)
   %save('timestamp.mat','dateStamp');
   %save('level.mat','dataLevel');
   %name protocol: Dataset_deviceid_startfreq_stopfreq
-  dataSetname=sprintf('Dataset_%s_%s_%s.mat',int2str(MultiLevel.Info.DeviceId), int2str(MultiLevel.Info.StartFreq),...
+  dataSetname=sprintf('MultiSensorData\\Dataset_%s_%s_%s.mat',int2str(MultiLevel.Info.DeviceId), ...
+      int2str(MultiLevel.Info.StartFreq),...
       int2str(MultiLevel.Info.StopFreq));
-  save(dataSetname,'dateStamp','dataLevel');
-  disp('Step5: successfully output dataset!!!');
+  deviceInfo=MultiLevel.Info;
+  save(dataSetname,'deviceInfo','dateStamp','dataLevel');
+  display('finish work on a sensor..');
+  display('=====================');
 end
 
 %Read Out Spectrum Data from several days (one station)
@@ -121,7 +135,7 @@ end
 %Read all data sets from an argus file
 function [Info,Data]=ArgusReader(Path,StartF,StopF,Info,Data)
  
- len = (StopF-StartF)/0.025+1;
+ len = (StopF-StartF)/25+1;
  fid = fopen(Path);
  jump_distance = 0;
  fseek(fid,jump_distance,'bof');
