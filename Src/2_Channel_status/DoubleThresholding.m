@@ -2,7 +2,7 @@
 % Propose: Thresholding for the input data
 % Enviroment: Matlab 2015b
 % @auththor: kevin
-% ThresInfo.LevelArr, Level, Mask
+% ThresInfo.LevelArr, Level, Mask, LowThreshold, HighThreshold
 
 function [ThresInfo]=DoubleThresholding(Data)
     maxIter=100; tol=1e-6;
@@ -36,8 +36,12 @@ function [ThresInfo]=DoubleThresholding(Data)
         end;
     end;
     
+    [HistInfo]=HistAnalysis(img, thresh(end))
+    
     %save compuation results
     ThresInfo.LevelArr=thresh;
     ThresInfo.Level=thresh(end);
     ThresInfo.Mask=imgBw;
+    ThresInfo.LowThreshold=HistInfo.LT;
+    ThresInfo.HighThreshold=HistInfo.HT;
 end

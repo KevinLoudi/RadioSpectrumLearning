@@ -3,16 +3,22 @@
 % Enviroment: Matlab 2015b
 % @auththor: kevin
 
-load D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\SingalSensorDataset\\Dataset_2_1720_1760.mat;
+clear; clc; close all;
+load D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\SingalSensorDataset\\Dataset_2_80_110.mat;
+display('successfully load data set..');
 %% thresholding
-local_data=dataLevel(1:100,1:100);
-ThresInfo=DoubleThresholding(local_data);
-
+startix=(100-80)/0.025+1;
+stopix=(101-80)/0.025+1;
+local_data=dataLevel(startix:stopix,1:500);
+%normalized data to [0,255] for sake of image show
+nor_data=Normalize_matrix(local_data,0,255);
+figure(1); imagesc(nor_data); title('original data');
+ThresInfo=DoubleThresholding(nor_data);
+imagesc(ThresInfo.Mask); %show the thresholding results
 %% plot histogram of the two classified group and fit into normal distributions
-
-clf;
 %plot sample of two classes separtely
-s1=local_data(~ThresInfo.Mask);
+figure(2);
+s1=nor_data(~ThresInfo.Mask);
 h1=histogram(s1,'Normalization','probability');
 hold on;
 
@@ -27,7 +33,7 @@ hold on;
 plot(x1.value, y1.value, 'LineWidth',2);
 
 %plot sample of two classes separtely
-s2=local_data(ThresInfo.Mask);
+s2=nor_data(ThresInfo.Mask);
 h2=histogram(s2,'Normalization','probability');
 
 %fit distribution and plot pdf
@@ -39,10 +45,30 @@ x2.value=x2.min:((x2.max-x2.min)/100):x2.max
 y2.value=pdf(pd2,x2.value);
 hold on;
 plot(x2.value, y2.value, 'LineWidth',2);
-
+title('classify analysis');
 
 %% double-threshold, separate into three region
-thres_1=x1.max;
-thres_2=x2.max
+thres_1=pd1.mu+2*pd1.sigma;
+thres_2=pd2.mu-2*pd2.sigma;
+thri_results=zeros(size(nor_data));
+[row,col]=size(thri_results);
+for i=1:row
+    for j=1:col
+        if nor_data(i,j)<thres_1
+            thri_results(i,j)=0;
+        elseif nor_data(i,j)>thres_2
+            thri_results(i,j)=2;
+        else
+            thri_results(i,j)=1; %uncertainty resion
+        end
+    end
+end
+
+region_noise=thri_results==0;
+region_signal=thri_results==2;
+region_uncertainty=thri_results==1;
+figure(3); imagesc(region_noise); title('noise region');
+figure(4); imagesc(region_signal); title('signal region');
+figure(5); imagesc(region_uncertainty); title('uncertainty region');
 
 

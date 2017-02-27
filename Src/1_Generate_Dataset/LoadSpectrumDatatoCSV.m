@@ -8,28 +8,33 @@ function LoadSpectrumDatatoCSV()
  %File Folder
  display('Load one sensor''s data in a given  frequency range.');
  display('Step1: set file path and data load parameters....');
- Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
  %Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
- %Critical Parameters
- StartF= 1720;%60;
- StopF=1760;%137;
- StepF = 0.025;
+ Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\60-137\\%s\\02';
+ %File Parameters
+ StartF= 60;%1710;%60;
+ StopF=137;%1960;%137;
+ %StepF = 0.025;
+ %Needed part 
+ m_Info.StartF=80;%1740;%1835;%%88;
+ m_Info.StopF=110;%1760;%1855;%%108;
+ m_Info.StepF=0.025;
  DayArray = {'20151216','20151217','20151218','20151219','20151220','20151221','20151222'};
  
  %DayArray = {'20151217'};
  
   %Read data day by day if the "Path" exist locally
   display('Step2: read file and load data....');
- [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartF,StopF);
+ [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartF,StopF,m_Info);
  
  display('Step3: shape data and cut off....');
- MultiLevel.Info.StartFreq = StartF;
- MultiLevel.Info.StopFreq = StopF;
- MultiLevel.Info.StepFreq = StepF;
+ MultiLevel.Info.StartFreq = m_Info.StartF;
+ MultiLevel.Info.StopFreq = m_Info.StopF;
+ MultiLevel.Info.StepFreq = m_Info.StepF;
+ 
  cur_time = fix(clock);
  time_str = sprintf('%.4d-%.2d-%.2d:%.2d:%.2d:%.2d:%.2d',cur_time(1),cur_time(2),cur_time(3),cur_time(4),cur_time(5),cur_time(6));
  MultiLevel.Info.BuildTime = time_str;
- filename = sprintf('SingalSensorDataset/MultiLevel_%s_%s.mat', num2str(StartF),num2str(StopF));
+ filename = sprintf('SingalSensorDataset/MultiLevel_%s_%s.mat', num2str(m_Info.StartF),num2str(m_Info.StopF));
  save(filename,'MultiLevel');
 
  %Write MultiLevel Data and Time Stamps into CSV file
@@ -69,7 +74,7 @@ end
 %Path format: 'Y:\\20-3000\\%s\\03' DayArray should be string
 %Level.Info: Device, Lon, Lat, Status, FileNum  Level.Data: Time[time,stringlen], level[time,freq]
 
-function [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartFreq,StopFreq)
+function [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartFreq,StopFreq,m_Info)
 Maxsize = 1000; 
 %index for the time slot num
 datasize = 1;
@@ -98,7 +103,7 @@ for i = 1:length(DayArray)
      %check if this-file really exist
      if exist(filename,'file') == 2
         %Read out data from a *.argus file
-        [Info,Data]=ArgusReader(filename,StartFreq,StopFreq,Info,Data);
+        [Info,Data]=ArgusReader(filename,StartFreq,StopFreq,Info,Data,m_Info);
         %tmpLevel.SampleTime=floor(str2num(thisdir(1:12)));
         Data.time(Info.FileNum,1:12)=thisdir(1:12);
         %Count the accessed data
@@ -119,9 +124,9 @@ MultiLevel.Info=Info;
 end
 
 %Read all data sets from an argus file
-function [Info,Data]=ArgusReader(Path,StartF,StopF,Info,Data)
+function [Info,Data]=ArgusReader(Path,StartF,StopF,Info,Data,m_Info)
  
- len = (StopF-StartF)/0.025+1;
+ %len = (StopF-StartF)/0.025+1;
  fid = fopen(Path);
  jump_distance = 0;
  fseek(fid,jump_distance,'bof');
@@ -132,16 +137,20 @@ function [Info,Data]=ArgusReader(Path,StartF,StopF,Info,Data)
    Info.Latitude=fread(fid,1,'float=>float');
    Info.Status=1; %aleard assign device information
  end
-
-%  jump_distance = 36+0; %+0: min level; +2: mean level; +4: max level
-%  fseek(fid,jump_distance,'bof');
-%  LevelData.MinLevel = fread(fid,len,'integer*2=>int16',6);
-%  jump_distance = 36+2;
-%  fseek(fid,jump_distance,'bof');
-%  LevelData.MeanLevel= fread(fid,len,'integer*2=>int16',6);
  jump_distance = 36+4;
  fseek(fid,jump_distance,'bof');
  %LevelData.MaxLevel= fread(fid,len,'integer*2=>int16',6);
- Data.level(Info.FileNum, 1:len)= fread(fid,len,'integer*2=>int16',6);
+ %cut off data
+ if m_Info.StartF<StartF || m_Info.StopF>StopF
+     display('Cannot fetch data!!!');
+     return;
+ end
+ %calculate the index of to-be cut off data
+ Startix=(m_Info.StartF-StartF)/0.025+1;
+ Stopix=(m_Info.StopF-StartF)/0.025+1;
+ t_len=(StopF-StartF)/0.025;
+ %cut off data read in a file and insert into the matrix row
+ tmpData=fread(fid,t_len,'integer*2=>int16',6);
+ Data.level(Info.FileNum, 1:(Stopix-Startix+1))=tmpData(Startix:Stopix);
  fclose(fid);
 end
