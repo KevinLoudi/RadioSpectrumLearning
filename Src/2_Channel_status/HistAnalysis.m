@@ -29,6 +29,7 @@ function [HistInfo]=HistAnalysis(Data, Threshold)
     plot(x2.value, y2.value, 'LineWidth',2);
     title('classify analysis');
     
+    %calculate double threshold
     HistInfo.LT=pd1.mu+2*pd1.sigma;
     HistInfo.HT=pd2.mu-2*pd2.sigma;
 end

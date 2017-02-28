@@ -7,14 +7,14 @@ clear; clc; close all;
 load D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\SingalSensorDataset\\Dataset_2_80_110.mat;
 display('successfully load data set..');
 %% thresholding
-startix=(100-80)/0.025+1;
-stopix=(101-80)/0.025+1;
-local_data=dataLevel(startix:stopix,1:500);
+startix=(106-80)/0.025+1;
+stopix=(107-80)/0.025+1;
+local_data=dataLevel(startix:stopix,1:1000);
 %normalized data to [0,255] for sake of image show
 nor_data=Normalize_matrix(local_data,0,255);
 figure(1); imagesc(nor_data); title('original data');
 ThresInfo=DoubleThresholding(nor_data);
-imagesc(ThresInfo.Mask); %show the thresholding results
+%imagesc(ThresInfo.Mask); %show the thresholding results
 %% plot histogram of the two classified group and fit into normal distributions
 %plot sample of two classes separtely
 figure(2);
@@ -70,5 +70,29 @@ region_uncertainty=thri_results==1;
 figure(3); imagesc(region_noise); title('noise region');
 figure(4); imagesc(region_signal); title('signal region');
 figure(5); imagesc(region_uncertainty); title('uncertainty region');
+
+%% test simulation data
+clear; clc; close all;
+load D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\SimulationDataset\\Simset.mat;
+display('sucessfully load sim data...');
+%% plot data
+figure(1);
+plot(1:length(y),y);
+hold on;
+plot(1:length(rcs), (rcs>0)*100, 'LineWidth',2);
+
+%% thresholding analysis
+nor_y=Normalize_matrix(y,0,255);
+thre_info=DoubleThresholding(nor_y);
+hold on;
+text(thre_info.LowThreshold,0,int2str(thre_info.LowThreshold));
+hold on;
+text(thre_info.HighThreshold,0,int2str(thre_info.HighThreshold));
+
+%% classify
+figure(2)
+res=Classification(nor_y,thre_info);
+err=sum(abs(res-rcs))/length(rcs); %  96.2%
+
 
 
