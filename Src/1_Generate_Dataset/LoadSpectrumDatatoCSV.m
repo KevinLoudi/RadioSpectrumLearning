@@ -8,15 +8,15 @@ function LoadSpectrumDatatoCSV()
  %File Folder
  display('Load one sensor''s data in a given  frequency range.');
  display('Step1: set file path and data load parameters....');
- %Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
- Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\60-137\\%s\\02';
+ Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
+ %Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\60-137\\%s\\02';
  %File Parameters
- StartF= 60;%1710;%60;
- StopF=137;%1960;%137;
+ StartF= 1710;%60;
+ StopF= 1960;%137;
  %StepF = 0.025;
  %Needed part 
- m_Info.StartF=80;%1740;%1835;%%88;
- m_Info.StopF=110;%1760;%1855;%%108;
+ m_Info.StartF=1740;%1835;%%88;
+ m_Info.StopF=1760;%1855;%%108;
  m_Info.StepF=0.025;
  DayArray = {'20151216','20151217','20151218','20151219','20151220','20151221','20151222'};
  

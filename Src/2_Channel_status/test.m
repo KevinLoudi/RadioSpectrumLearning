@@ -4,17 +4,24 @@
 % @auththor: kevin
 
 clear; clc; close all;
-load D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\SingalSensorDataset\\Dataset_2_80_110.mat;
+load D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\SingalSensorDataset\\Dataset_2_1740_1760.mat;
 display('successfully load data set..');
 %% thresholding
-startix=(106-80)/0.025+1;
-stopix=(107-80)/0.025+1;
-local_data=dataLevel(startix:stopix,1:1000);
+startix=(1740-1740)/0.025+1;
+stopix=(1750-1740)/0.025+1;
+local_data=dataLevel(1:1000,startix:stopix);
 %normalized data to [0,255] for sake of image show
 nor_data=Normalize_matrix(local_data,0,255);
 figure(1); imagesc(nor_data); title('original data');
-ThresInfo=DoubleThresholding(nor_data);
+%ThresInfo=DoubleThresholding(nor_data);
+Cutpoint=Recursive_oneside_hypthesis_testing(nor_data,20);
 %imagesc(ThresInfo.Mask); %show the thresholding results
+%% classify
+mask=nor_data>Cutpoint(end);
+imagesc(mask);
+save('ChannelStatusDataset/RandomCS_1740_1750.mat','mask')
+imagesc(mask);  title('Channel status'); xlabel('Frequency'); ylabel('Time slot');
+
 %% plot histogram of the two classified group and fit into normal distributions
 %plot sample of two classes separtely
 figure(2);
@@ -83,11 +90,12 @@ plot(1:length(rcs), (rcs>0)*100, 'LineWidth',2);
 
 %% thresholding analysis
 nor_y=Normalize_matrix(y,0,255);
-thre_info=DoubleThresholding(nor_y);
-hold on;
-text(thre_info.LowThreshold,0,int2str(thre_info.LowThreshold));
-hold on;
-text(thre_info.HighThreshold,0,int2str(thre_info.HighThreshold));
+thre_info=DoubleThresholding(y);
+axis([0 120 0 0.2]);
+% hold on;
+% text(thre_info.LowThreshold,0,int2str(thre_info.LowThreshold));
+% hold on;
+% text(thre_info.HighThreshold,0,int2str(thre_info.HighThreshold));
 
 %% classify
 figure(2)
