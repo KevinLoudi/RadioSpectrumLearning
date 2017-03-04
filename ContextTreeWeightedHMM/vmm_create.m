@@ -50,6 +50,7 @@ elseif strcmp(alg, 'DCTW')
     javaMethod('init',jVmm,params.ab_size,params.d);
 elseif strcmp(alg, 'BinaryCTW')
     jVmm = javaObject('vmm.algs.BinaryCTWPredictor');
+    %alpbet size, vmm order
     javaMethod('init',jVmm,params.ab_size,params.d);
 elseif strcmp(alg, 'LZ78')
     jVmm = javaObject('vmm.algs.LZ78Predictor');
