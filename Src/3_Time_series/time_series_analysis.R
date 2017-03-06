@@ -12,7 +12,7 @@ par(mar = rep(2, 4))
 acf(dc,main="acf of duty cycle")
 acf(dc.dif,main="acf of diff of duty cycle")
 acf(u,main="acf of random noise")
-len=length(dc)
+len=length(dc$V1)
 plot(dc$V1,type="s",main="duty cycle")
 plot(u,type="s",main="random noise")
 
@@ -22,7 +22,7 @@ Box.test(dc.dif,lag=10,type=c("Ljung-Box"))
 Box.test(u,lag=10,type=c("Ljung-Box")) #high than 5%, reject the correlation presume
 
 #decompose of time series
-dc.decom<-decompose(dc,type="multiplicative")
+dc.decom<-decompose(dc$V1,type="multiplicative")
 trend<-dc.decom$trend
 sensonal<-dc.decom$sensonal
 random<-dc.decom$random

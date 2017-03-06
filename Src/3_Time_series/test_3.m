@@ -59,12 +59,13 @@ for i=1:length(ALGS),
 end
 
 
-%% Calculate DC data
+%% Load data for DC calculation
 cut_point=(1745-1740)/0.025;
-mask=mask(1:cut_point, :);
+mask=mask(:,1:cut_point);
 figure(3)
 imagesc(mask);  title('Channel status'); xlabel('Frequency'); ylabel('Time slot');
 
+%% Calculate DC data
 [tn,fn]=size(mask); dc=zeros(tn,1);
 for i=1:tn
     dc(i,1)=sum(mask(i,:))/fn;
