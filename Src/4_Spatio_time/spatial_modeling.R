@@ -70,3 +70,9 @@ plot(lzn.dir, lzndir.fit, as.table = TRUE)
 #using sqrt distance
 lznr.dir = variogram(log(zinc)~sqrt(dist), meuse, alpha = c(0, 45, 90, 135))
 plot(lznr.dir, lznr.fit, as.table = TRUE)
+
+#draw a variogram maps
+vgm.map = variogram(log(zinc)~sqrt(dist), meuse, cutoff = 1500, width = 100,
+                    map = TRUE)
+#show only semivariogram map values based on at least 5 point pairs
+plot(vgm.map, threshold = 5)
