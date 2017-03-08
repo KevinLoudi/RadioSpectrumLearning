@@ -8,20 +8,21 @@ function LoadSpectrumDatatoCSV()
  %File Folder
  display('Load one sensor''s data in a given  frequency range.');
  display('Step1: set file path and data load parameters....');
- Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
- %Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\60-137\\%s\\02';
+ 
+ %Path ='D:\\Code\\Data\\60-137\\%s\\02';
+ %Path ='D:\\Code\\Data\\600-800\\%s\\02';
+ Path ='D:\\Code\\Data\\1710-1960\\%s\\02';
+ 
  %File Parameters
- StartF= 1710;%60;
- StopF= 1960;%137;
+ StartF= 1710;
+ StopF= 1960;
  %StepF = 0.025;
  %Needed part 
- m_Info.StartF=1740;%1835;%%88;
- m_Info.StopF=1760;%1855;%%108;
+ m_Info.StartF=1920;
+ m_Info.StopF=1935;
  m_Info.StepF=0.025;
  DayArray = {'20151216','20151217','20151218','20151219','20151220','20151221','20151222'};
- 
- %DayArray = {'20151217'};
- 
+  
   %Read data day by day if the "Path" exist locally
   display('Step2: read file and load data....');
  [MultiLevel] = MultiDaySpectrumReader(Path,DayArray,StartF,StopF,m_Info);
@@ -56,7 +57,7 @@ function CSVFormatWriter(FileName,days)
         tmpTime=timeStamparr(i,1:12);
         tmpDataVector=[str2num(tmpTime(1:4)),str2num(tmpTime(5:6)),str2num(tmpTime(7:8)),str2num(tmpTime(9:10)),str2num(tmpTime(11:12)),0];
         %add time stamp of the new day/timesolts
-        dateStamp=[dateStamp; datestr(tmpDataVector)];
+        dateStamp=[dateStamp; datestr(tmpDataVector,'yyyy-mm-dd HH:MM:SS')];
      end
   end
   %save('timestamp.mat','dateStamp');
