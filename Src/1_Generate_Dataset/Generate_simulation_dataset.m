@@ -4,25 +4,24 @@
 % Enviroment: Matlab 2015b
 % @auththor: kevin
 
-%clear; thresh=Generate_signal();
-function [y,rcs]=Generate_simulation_dataset()
-    clear;
+%clear; thresh=Generate_signal();  SourceInfo is a cell
+function [y,cs]=Generate_simulation_dataset(SourceInfo,NoiseInfo,len)
     %generate signal
-    len=10000;
     t=1:len;
     
     %noise with mean and std
-    n=Uniform_noise(5, 2, len);
+    n=Uniform_noise(NoiseInfo.mean, NoiseInfo.std, len);
+    y=0; cs=0;
     %PU signal with mean, std and expected visit times
-    [s1,rcs1]=Singal_source(35,10,len,8);
-    [s2,rcs2]=Singal_source(36,10,len,5);
-    %[s3,rcs3]=Singal_source(24,10,len,2);
+    for i=length(SourceInfo)
+        [s,rcs]=Singal_source(SourceInfo{i}.mean,SourceInfo{i}.std,len,SourceInfo{i}.visit_time);
+        y=y+s;
+        cs=cs+rcs;
+    end
+    %plus envirmental noise %SU received signal
+    y=y+n;
     
-    %SU received signal
-    y=s1+s2+n;
-    rcs=rcs1+rcs2;
-    
-    %plot(1:len, y);
+    plot(1:len, y);
 end
 
 function n=Uniform_noise(mean, std, len)
@@ -53,7 +52,7 @@ function [s,x]=Singal_source(mean, std, len, visit_time)
     %randomly set stay time
     stay_time=zeros(1,visit_time);
     for i=1:visit_time
-        a=1; b=max_possible_gap(i); %random number boundry
+        a=1; b=max_possible_gap(i)/2; %random number boundry
         %generate random number in range of [a,b]
         stay_time(i)=floor((b-a)*rand(1)+a);
     end

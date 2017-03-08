@@ -14,7 +14,7 @@ function [cut_point]=Recursive_oneside_hypthesis_testing(data, times)
         error('Input data illegal!!!');
         exit;
     end
-    tol_std=0.01;
+    tol_std=0.001;
     data_vec=data(:);
     z_alph=1.645; % 95%confidence
     cut_point=zeros(1,times); %save threshold cut point
@@ -27,10 +27,10 @@ function [cut_point]=Recursive_oneside_hypthesis_testing(data, times)
         remain_point=data_vec<cut_point(ix);
         %remain part
         data_vec=data_vec(remain_point);
-        if ix>1 && d_std(ix)-d_std(ix-1)<tol_std
-           display('reach the goal!!!');
-           cut_point=cut_point(1:ix);
-          break;
+        if ix>1 && abs(d_std(ix)-d_std(ix-1))<tol_std
+                %display('reach the goal!!!');
+                cut_point=cut_point(1:ix);
+                break;
         end
     end
 end
