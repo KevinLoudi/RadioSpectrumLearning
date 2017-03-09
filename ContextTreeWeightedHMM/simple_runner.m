@@ -2,15 +2,15 @@
 % Browse the code to get the basics of how-to utilize this VMM tool
 
 % 1. defining sequence and its alphabet
-seq = 'abracadabra';
-ab = alphabet('abracadabra');
+seq = 'abracadabra'; 
+ab = alphabet('abracadabra'); %creates an alphabet object
 
 % 2. testing all algs; param values ~match "best" values for text data (see
 % tbl.8 in VMM paper)
 ALGS = {'LZms', 'LZ78', 'PPMC', 'DCTW', 'BinaryCTW', 'PST'};
 params.ab_size = size(ab);
-params.d = 5;
-params.m = 2;
+params.d = 5; 
+params.m = 2; 
 params.s = 8;
 params.pMin = 0.006;
 params.alpha= 0;
@@ -28,8 +28,7 @@ disp(' ');
 for i=1:length(ALGS),
     disp(sprintf('Working with %s', ALGS{i} ));
     disp('--------')
-    jVmm = vmm_create(map(ab, seq),  ALGS{i}, params);
-
+    jVmm = vmm_create(map(ab, seq),  ALGS{i}, params);  %maps string s to a corresponding  alphanumeric-indices's alphabe
     disp(sprintf('Pr(a | br) = %f', vmm_getPr(jVmm, map(ab,'a'), map(ab,'br'))));
     disp(sprintf('Pr(b | br) = %f', vmm_getPr(jVmm, map(ab,'b'), map(ab,'br'))));
     disp(sprintf('Pr(c | br) = %f', vmm_getPr(jVmm, map(ab,'c'), map(ab,'br'))));

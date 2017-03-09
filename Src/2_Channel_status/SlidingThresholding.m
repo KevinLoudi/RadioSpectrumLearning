@@ -6,7 +6,7 @@
 function [cs,thres]=SlidingThresholding(data,freqix,freqwidth)
 
 width=freqwidth/0.025; %40
-startix=1; ix=startix
+startix=1; ix=startix;
 stopix=startix+length(freqix);
 cs=zeros(size(data));
 thres=[];
@@ -25,8 +25,6 @@ local_data=data(:,ix:end);
 local_thres=cut_point(end);
 thres=[thres,local_thres];
 cs(:,ix:end)=data(:,ix:end)>local_thres; %local thresholding
-
-
 end
 
 

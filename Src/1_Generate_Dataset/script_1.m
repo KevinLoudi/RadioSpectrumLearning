@@ -41,11 +41,13 @@ figure(2);
   display('TV analysised...');
   
   %%  GSM1800
+  clear;clc;close all;
  load('D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\SingalSensorDataset\\Dataset_2_1710_1740.mat');
 timeix=datetime(dateStamp,'InputFormat','yyyy-MM-dd HH:mm:SS');
 freqix=1710:0.025:1740;
 data=dataLevel;
-clear dateStamp; clear dataLevel;
+clear dataLevel;
+display('GSM 1800 data loaded!!!');
 %% 
 figure(3);
   subplot(2,1,1); plot(freqix,data(1,:)); title('GSM1800 UL Spectrum in frequency');
@@ -137,21 +139,34 @@ figure(4);
  %% energy detction with real data
  [cut_point]=Recursive_oneside_hypthesis_testing(data, 100);
  thres=cut_point(end);
- figure(5); subplot(4,1,1);  plot(s_thres); title('Adaptive thresholding');%plot(1:length(cut_point),cut_point); title('Thresholding spectrum');
+  %thresholding thresholding
+ freqwidth=0.25; %1MHz for FM signal
+ [s_cs,s_thres]=SlidingThresholding(data,freqix,freqwidth);
+ figure(5);  subplot(4,1,1);  plot(s_thres); title('Adaptive thresholding');%plot(1:length(cut_point),cut_point); title('Thresholding spectrum');
  xlabel('Times'); ylabel('Threshold value');
- subplot(4,1,2); imagesc(pro_data);
+ subplot(4,1,2); imagesc(pro_data); xlabel('Frequencies'); ylabel('Time slots'); title('Orignal spectrum sample');
  %direct threholding
  cs=pro_data>thres;
- subplot(4,1,3); imagesc(cs);
- %thresholding thresholding
- freqwidth=3; %1MHz for FM signal
- [s_cs,s_thres]=SlidingThresholding(data,freqix,freqwidth);
- subplot(4,1,4); imagesc(s_cs);
- 
+ subplot(4,1,3); imagesc(cs); xlabel('Frequencies'); ylabel('Time slots'); title('Gobal ROHT');
+ subplot(4,1,4); imagesc(s_cs); xlabel('Frequencies'); ylabel('Time slots'); title('Local ROHT');
+ print('Figs/Adoptive thresholding','-dpng');
+ a_cs=cs; %select which kind of cs data
+ save('ChannelStauseDataset/ChannelStatus_1710_1740.mat','a_cs');
+ tot_time=start_ti:step_ti:stop_ti;
+ tot_time=datestr(tot_time,'yyyy-mm-dd HH:MM:SS')
+ save('ChannelStauseDataset/Timeindex_1710_1740.mat','tot_time');
+ display('channel analysis finished!!!');
  %% Calculate major index
  %dc
  dc=sum(cs,2)/length(freqix); %average each row
- figure(6); subplot(4,1,1); plot(start_ti:step_ti:stop_ti,dc); title('duty cycle');
+ figure(6); subplot(4,1,1); plot(dc); title('duty cycle');
+ save('ChannelStauseDataset/Duty_cycle_1710_1740.mat','dc');
+ %% plot dc
+ load('ChannelStauseDataset/Duty_cycle_1710_1740.mat');
+ timeix=datetime(tot_time,'InputFormat','yyyy-MM-dd HH:mm:SS');
+ figure(7); plot(timeix,dc); title=('Dutty cycle'); xlabel('Date'); ylabel('Ratio')
+ print('Figs/DC','-dpng');
+ 
  %%  cvd
  cvd=zeros(size(freqix));
  for freq=1:length(freqix)
@@ -159,11 +174,70 @@ figure(4);
     cvd(freq)=sum(duration)/length(duration);
  end
  
+ 
+ %################################Part 2: Channel status model ############################################
+ %% load data
+ clear;clc;close all;
+ cs_path= 'D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\ChannelStauseDataset\\ChannelStatus_1710_1740.mat';
+ timeix_path= 'D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\ChannelStauseDataset\\Timeindex_1710_1740.mat';
+ load(cs_path);
+ load(timeix_path);
+ timeix=datetime(dateStamp,'InputFormat','yyyy-MM-dd HH:mm:SS');
+ seq_mat=a_cs; seq_ix=dateStamp; clear a_cs; clear dateStamp; clear cs_path; clear timeix_path;
+ %% get a sequence 
+ yesfigure=0;
+ startix=find(timeix==datetime('2015-12-16 00:05:00','InputFormat','yyyy-MM-dd HH:mm:SS'));
+ stopix=find(timeix==datetime('2015-12-17 00:05:00','InputFormat','yyyy-MM-dd HH:mm:SS'));
+ if yesfigure
+    figure(1); 
+    imagesc(seq_mat(startix:stopix, :)); title('GSM1800 UL in 2015-12-16');
+ end
+ seq=seq_mat(startix:stopix,120);
+ %shape data to string
+ seq=int16(seq(:,1)');
+ %assemble a string
+ seq_str='';
+for i=1:length(seq)
+    seq_str=strcat(seq_str,int2str(seq(i)));
+end
+ %% split original data into train-set and test-set
+% seq_str='11111111111111111001111111111111111111111111111111';
+alp = alphabet(seq_str);
+split_point=length(seq_str)-10;
+seq_train=seq_str(1:split_point);
+seq_test=seq_str((split_point+1):end); 
+%algorithm
+ALGS = {'LZms', 'LZ78', 'PPMC', 'DCTW', 'PST'};;
+params.ab_size = size(alp);
+params.d = 10;  %maxmium order of VMM order %D
+params.m = 2; %only for LZ-MS
+params.s = 8; %only for LZ-MS
+params.pMin = 0.006; %only for PST
+params.alpha= 0; %only for PST
+params.gamma = 0.0006; %only for PST
+params.r = 1.05; %only for PST
+params.vmmOrder = params.d; 
+ 
+disp('---------------------------------------------------');
+disp('working with AB={0,1}');
+disp('---------------------------------------------------');
+disp(' ');
 
- 
+% 3. run each of the VMM algorithms
+for i=1:length(ALGS),
+    disp(sprintf('Working with %s', ALGS{i} ));
+    disp('--------')
+    %create a VMM through training 
+    jVmm = vmm_create(map(alp, seq_train),  ALGS{i}, params);
+    disp(sprintf('Pr(0 | 00) = %f', vmm_getPr(jVmm, map(alp,'0'), map(alp,'00'))));
+    disp(sprintf('Pr(1 | 00) = %f', vmm_getPr(jVmm, map(alp,'1'), map(alp,'00'))));
+    % calculates the length in bits of the  "compressed" representation of
+    % seq.  -log[ Pr ( seq | jVmm) ]
+    disp(sprintf('-lg(Pr(tar))=%f', vmm_logEval(jVmm,map(alp, seq_test))));
+    disp('--------')
+    disp(' ');
+end
 
- 
- 
- 
+
  
  
