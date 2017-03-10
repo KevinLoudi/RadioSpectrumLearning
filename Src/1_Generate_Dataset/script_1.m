@@ -69,7 +69,7 @@ figure(4);
   display('CDMA2000 analysised...');
   display('All data analysising finished!!!');
   
- %################################Part 1: Energy detection############################################
+ %################################Part 2: Energy detection############################################
  %% with simulation data
  clear; clc; close all;
  len=10000;
@@ -157,7 +157,7 @@ figure(4);
  save('ChannelStauseDataset/Timeindex_1710_1740.mat','tot_time');
  display('channel analysis finished!!!');
  %% Calculate major index
- %dc
+ %SCR 业务聚集度
  dc=sum(cs,2)/length(freqix); %average each row
  figure(6); subplot(4,1,1); plot(dc); title('duty cycle');
  save('ChannelStauseDataset/Duty_cycle_1710_1740.mat','dc');
@@ -167,14 +167,16 @@ figure(4);
  figure(7); plot(timeix,dc); title=('Dutty cycle'); xlabel('Date'); ylabel('Ratio')
  print('Figs/DC','-dpng');
  
- %%  cvd
+ %%  CVD
  cvd=zeros(size(freqix));
  for freq=1:length(freqix)
     duration=FindZerosBlock(cs(:,freq)');
     cvd(freq)=sum(duration)/length(duration);
  end
- 
- 
+ %% mobile service utilization, MSU
+ energysum=sum(pro_data,2);
+ msu=diff(energysum,1); %first-order difference
+ histogram(msu,'Normalization','probability');
  %################################Part 2: Channel status model ############################################
  %% load data
  clear;clc;close all;
@@ -238,6 +240,45 @@ for i=1:length(ALGS),
     disp(' ');
 end
 
+%################################Part 3: Spatial analysis############################################
+%% Spatial
+clear; clc; close all;
 
- 
- 
+orig_path='D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\MultiSensorsDataset\\%s';
+orig_filename='Dataset_%s_101700_101700.mat';
+
+SensorIds={'2','3','4','6','7','8','9','10','11'};
+device_n=length(SensorIds); 
+%path{1}=char('D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\MultiSensorsDataset\\Dataset_2_101700_101700.mat');
+%path{2}=char('D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\MultiSensorsDataset\\Dataset_3_101700_101700.mat');
+
+inital_flag=1; time_sp=0; data_sp=0;
+locateion_sp=zeros(2,device_n);
+
+for n=1:device_n
+    t_filename=sprintf(orig_filename, SensorIds{n});
+    t_path=sprintf(orig_path, t_filename);
+    load(t_path);
+    %load time-stamp and inital data size in the first load
+    if inital_flag==1
+        [time_n,freq_n]=size(dataLevel);
+        time_sp=datetime(dateStamp,'InputFormat','yyyy-MM-dd HH:mm:SS');
+        data_sp=zeros(time_n,device_n);
+        inital_flag=0;
+    end
+    %new load data do not match
+    [t_time,t_freq]=size(dataLevel);
+    if t_time~=time_n || t_freq~=freq_n
+        error('device data set do not match, exit!!!!');
+    end
+    data_sp(:,n)=dataLevel(:,1); %make sure the two vector matches
+    locateion_sp(1,n)=deviceInfo.Longitude;
+    locateion_sp(2,n)=deviceInfo.Latitude;
+end
+
+display('finish spatial data load!!!');
+%% re-save loaded data
+save('SpatialDataset/Spdata_1710_1740.mat','data_sp');
+save('SpatialDataset/Sptime_1710_1740.mat','dateStamp');
+save('SpatialDataset/Splocation_1710_1740.mat','locateion_sp');
+

@@ -6,16 +6,18 @@
 function LoadMultiSensorsSpectrum()
 %%Enabled when file read is needed
  %File Folder
+ recalculate_all=0; %skip the loaded data set 
  display('Load multiply sensors'' data of a given frequency range.');
  display('Step1: set file path and data load parameters....');
- SensorIds={'02','03'};
- Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\60-137\\%s\\';
+ SensorIds={'02','03','04'}; %,'07','08','09','10','11''06'
+ Path ='D:\\Code\\Data\\60-137\\%s\\';
  Def_path=Path;
  
 display('Step2: read file and load data....');
  for i=1:length(SensorIds)
    display('=====================');
    display('deal with a sensor....');
+ 
    Path=Def_path;
    Path=strcat(Path, SensorIds{i});
    
@@ -24,6 +26,13 @@ display('Step2: read file and load data....');
     StartF= 101700;%kHz
     StopF=101700;%
     StepF = 25;
+    
+   check_name=sprintf('MultiSensorsDataset\\Dataset_%s_%s_%s.mat',int2str(SensorIds{i}), ...
+      int2str(StartF),int2str(StopF));
+   if exist(check_name) && ~recalculate_all
+       continue; %skip this loop and go to see the next device
+   end
+    
     DayArray = {'20151216','20151217','20151218','20151219','20151220','20151221','20151222'};
     
     %Read data day by day if the "Path" exist locally
@@ -57,21 +66,60 @@ function CSVFormatWriter(FileName,days)
       levelDataarr=MultiLevel.ByDay{d}.level;
       %add level data from the new day in matrix
       dataLevel=[dataLevel;levelDataarr];
+      %deal with missing data from the vary beginning
       for i = 1:length(timeStamparr)
         tmpTime=timeStamparr(i,1:12);
         tmpDataVector=[str2num(tmpTime(1:4)),str2num(tmpTime(5:6)),str2num(tmpTime(7:8)),...
             str2num(tmpTime(9:10)),str2num(tmpTime(11:12)),0];
         %add time stamp of the new day/timesolts
-        dateStamp=[dateStamp; datestr(tmpDataVector)];
+        dateStamp=[dateStamp; datestr(tmpDataVector,'yyyy-mm-dd HH:MM:SS')];
+        %dateStamp=[dateStamp; datestr(tmpDataVector,'yyyy-mm-dd HH:MM:SS')];
      end
   end
   %save('timestamp.mat','dateStamp');
   %save('level.mat','dataLevel');
   %name protocol: Dataset_deviceid_startfreq_stopfreq
-  dataSetname=sprintf('MultiSensorData\\Dataset_%s_%s_%s.mat',int2str(MultiLevel.Info.DeviceId), ...
+  dataSetname=sprintf('MultiSensorsDataset\\Dataset_%s_%s_%s.mat',int2str(MultiLevel.Info.DeviceId), ...
       int2str(MultiLevel.Info.StartFreq),...
       int2str(MultiLevel.Info.StopFreq));
   deviceInfo=MultiLevel.Info;
+  
+  timeix=datetime(dateStamp,'InputFormat','yyyy-MM-dd HH:mm:SS');
+  
+  start_ti=datetime('2015-12-15 00:00:00','InputFormat','yyyy-MM-dd HH:mm:SS');
+  step_ti=minutes(5); %5 minutes duration between 2 time slots
+  stop_ti=datetime('2015-12-22 23:55:00','InputFormat','yyyy-MM-dd HH:mm:SS');
+  freqix=MultiLevel.Info.StartFreq:MultiLevel.Info.StopFreq:MultiLevel.Info.StopFreq;
+  
+  exp_ti_slots=(stop_ti-start_ti)/step_ti+1; %expected time slots
+  pro_data=0;
+  
+  %deal with missing data
+  if exp_ti_slots==length(dataLevel(:,1))
+     display('no missed data');
+     pro_data=dataLevel;
+ %unequal to the therotical value, must miss some data
+ else
+     display('need to process missed data!!!');
+     pro_data=zeros(exp_ti_slots,length(freqix)); %prepare to process the missing data
+     ti=start_ti; ixt=1; %index for time slots
+     ix=1; %index for the row of dataset
+     
+     %timeix--time stampe for file; r_timxix--time stamp for the interested
+     %intreval
+     r_ix=start_ti:step_ti:stop_ti;
+     pro_data(:,:)=NaN;
+     for ix=1:length(timeix)
+         %assign every element of data to the correct position
+         pro_data(find(r_ix==timeix(ix)),:)=dataLevel(ix,:);
+     end
+  end
+
+  %renew data and timestamp
+  dataLevel=pro_data;
+  dateStamp=datestr(r_ix,'yyyy-mm-dd HH:MM:SS'); 
+  clear pro_data;
+ 
   save(dataSetname,'deviceInfo','dateStamp','dataLevel');
   display('finish work on a sensor..');
   display('=====================');

@@ -14,6 +14,7 @@
 library(gstat)
 data(DE_RB_2005, package = "gstat")
 
+
 dd<-DE_RB_2005@data
 plot(dd$PM10)
 
