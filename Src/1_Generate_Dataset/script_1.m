@@ -245,9 +245,9 @@ end
 clear; clc; close all;
 
 orig_path='D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\MultiSensorsDataset\\%s';
-orig_filename='Dataset_%s_101700_101700.mat';
+orig_filename='Dataset_%s_106800_106800.mat';
 
-SensorIds={'2','3','4','6','7','8','9','10','11'};
+load(sprintf(orig_path,'SensorIds.mat'));
 device_n=length(SensorIds); 
 %path{1}=char('D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\MultiSensorsDataset\\Dataset_2_101700_101700.mat');
 %path{2}=char('D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\MultiSensorsDataset\\Dataset_3_101700_101700.mat');
@@ -256,7 +256,8 @@ inital_flag=1; time_sp=0; data_sp=0;
 locateion_sp=zeros(2,device_n);
 
 for n=1:device_n
-    t_filename=sprintf(orig_filename, SensorIds{n});
+    %double string-number transfer to avoid name conflicts sucha as '02' and '2'
+    t_filename=sprintf(orig_filename, num2str(str2num(SensorIds{n})));
     t_path=sprintf(orig_path, t_filename);
     load(t_path);
     %load time-stamp and inital data size in the first load
@@ -278,7 +279,20 @@ end
 
 display('finish spatial data load!!!');
 %% re-save loaded data
-save('SpatialDataset/Spdata_1710_1740.mat','data_sp');
-save('SpatialDataset/Sptime_1710_1740.mat','dateStamp');
-save('SpatialDataset/Splocation_1710_1740.mat','locateion_sp');
+save_path='D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/%s';
+save(sprintf(save_path, 'Spdata_1068_1068.mat'),'data_sp');
+save(sprintf(save_path,'Sptime_1068_1068.mat'),'dateStamp');
+save(sprintf(save_path,'Splocation_1068_1068.mat'),'locateion_sp');
+
+%% pure spatial analysis
+clear; clc; close all;
+orign_path='D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/%s';
+load(sprintf(orign_path, 'Spdata_1068_1068.mat'));
+load(sprintf(orign_path, 'Spdata_1068_1068.mat'));
+load(sprintf(orign_path,'Splocation_1068_1068.mat'));
+%% 
+data_sum=sum(data_sp,1,'omitnan')./1e6;
+lon=locateion_sp(1,:); lat=locateion_sp(2,:);
+plot(lon,lat,data_sum)
+
 

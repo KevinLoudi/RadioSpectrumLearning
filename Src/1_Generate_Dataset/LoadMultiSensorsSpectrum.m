@@ -9,7 +9,14 @@ function LoadMultiSensorsSpectrum()
  recalculate_all=0; %skip the loaded data set 
  display('Load multiply sensors'' data of a given frequency range.');
  display('Step1: set file path and data load parameters....');
- SensorIds={'02','03','04'}; %,'07','08','09','10','11''06'
+ SensorIds={'02','03','04','06','07','08','09','10','11','12','13','15','17','18',...
+     '20','21','22','23','25','26','27','28','30','31','33','34','35','36','37','38','39',...
+     '40','42','45','46','47','48','49','51','52','53','54','55','56','58','59','60','61',...
+     '62','63','64','65','66','68','69','71','72','73','76','77','78','79','80','81','82',...
+     '83','84','85','87','88','89','90','92'}; %
+
+ %with trobule: '19' '50'
+ 
  Path ='D:\\Code\\Data\\60-137\\%s\\';
  Def_path=Path;
  
@@ -23,8 +30,8 @@ display('Step2: read file and load data....');
    
    %Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
     %Critical Parameters
-    StartF= 101700;%kHz
-    StopF=101700;%
+    StartF= 106800;%kHz
+    StopF=106800;%
     StepF = 25;
     
    check_name=sprintf('MultiSensorsDataset\\Dataset_%s_%s_%s.mat',int2str(SensorIds{i}), ...

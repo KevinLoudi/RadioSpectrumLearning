@@ -51,50 +51,72 @@ plot_forecast_error(dc.arima$residuals)
 plot_forecast_error(dc.forecast$residuals)
 
 ##############test scripts for class 'SDSTF'#############
-# create object of 'STSTF'
+# prepare library
 library(R.matlab)
-graphics.off()
-path<-"D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/Spdata_1710_1740.mat"
-sp_data<-readMat(path)
-path<-"D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/Splocation_1710_1740.mat"
-sp_loc<-readMat(path)
-path<-"D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/Sptime_1710_1740.mat"
-sp_ti<-readMat(path)
-
-
-start_obs=500
-stop_obs=700
-sp_data<-sp_data$data.sp[start_obs:stop_obs,]
-sp_loc<-sp_loc$locateion.sp
-sp_ti<-as.POSIXct(sp_ti$dateStamp[start_obs:stop_obs])
-
-grid=cbind(x=sp_loc[1,1:9],y=sp_loc[2,1:9])
-row.names(grid) = paste("point", 1:nrow(grid), sep="")
-grid=SpatialPoints(grid)
-plot(grid@coords)
 library(xts)
+library(spacetime)
+require(sp) 
+require(gstat) #load/install + load installr
+show_fig<-FALSE #do not show unimportant figures
+show_details<-TRUE #do show details in console
+
+#load data set
+origin_path<-"D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/"
+start_freq<-1068 #kHz
+stop_freq<-1068
+path<-paste(origin_path,"Spdata_1068_1068.mat",sep = "") #data matrix
+sp_data<-readMat(path,open='r')
+path<-paste(origin_path,"Splocation_1068_1068.mat",sep = "") #location set
+sp_loc<-readMat(path,open='r')
+path<-paste(origin_path,"Sptime_1068_1068.mat",sep = "") #time stamp
+sp_ti<-readMat(path,open='r')
+path<-paste(origin_path,"SensorIds.mat",sep = "") #sensor/device names
+sp_de<-readMat(path,open='r')
+
+#reserve partial data
+start_obs=500
+stop_obs=700  #cut off by index
+sp_data<-sp_data$data.sp[start_obs:stop_obs,] #data list
+sp_loc<-sp_loc$locateion.sp #location list
+sp_ti<-as.POSIXct(sp_ti$dateStamp[start_obs:stop_obs]) #transform to standard time stampe
+sp_de<-sp_de$SensorIds #sensor list
+de_num<-length(sp_de) #sensor num
+
+
+#create spatial grid as coordinates
+grid=cbind(x=sp_loc[1,1:de_num],y=sp_loc[2,1:de_num])
+row.names(grid) = paste("point", 1:nrow(grid), sep="")
+#create spatialpoints object 'grid'
+grid=SpatialPoints(grid)
+if (show_fig) {plot(grid@coords)}
+  
+#create extensible time stamp 'grid_time'
 len=length(sp_ti)
 grid_time=xts(1:len,as.POSIXct(sp_ti))
 plot(grid_time)
-m_g=c(1:9)
+m_g=c(1:de_num)
 
+#assign ID for data point
 m_data<-as.vector(sp_data)
 plot(m_data)
 IDs = paste("ID",1:length(m_data)) # ID for each data point
-mydata = data.frame(values = signif(m_data,9), ID=IDs) # 12 observers
-grid_df = STFDF(grid, grid_time, mydata) #create a 'SDSTF' object
 
+#organize data in frame
+mydata = data.frame(values = signif(m_data,de_num), ID=IDs) # 12 observers
+
+#create Spatial-temporal object
+grid_df = STFDF(grid, grid_time, mydata) #create a 'SDSTF' object
 grid_df=as(grid_df,"STSDF")
 
 ##statistics for data set
 grid_dd<-grid_df@data
-#plot(grid_dd)
+if (show_fig) {plot(grid_dd)}
+
 #summary observations of each station
 barplot(sort(table(grid_df@index[,1])),
         main="reported days per station",
         ylab="number of days", xaxt="n")
 
-acf(grid_df[sample(9,1),,drop=T]@data)
 var(grid_df@data$values)
 
 #numbers of stations
@@ -103,11 +125,13 @@ length(grid_df@sp)
 #calculate the empirical variogram: the first important step
 #formulation // exclude NaN in calculation
 empVgm <- variogramST(values~1, grid_df, tlags=0:10,na.omit=TRUE)
-plot(empVgm)
-empVgm
+if (show_fig) {plot(empVgm)}
+#plot 3-D varigram map
+plot(empVgm, wireframe=T, scales=list(arrows=F))
+if (show_details) {empVgm}
 
-# fit of theoretical purely spatial models #
-spEmpVgm <- empVgm[empVgm$timelag == 0,]
+# fit of theoretical purely spatial models 
+spEmpVgm <- empVgm[empVgm$timelag == 0,] #get the lag0 in time
 class(spEmpVgm) <- c("gstatVariogram", "data.frame")
 spEmpVgm <- spEmpVgm[-1,1:3]
 spEmpVgm$dir.hor <- 0
@@ -117,11 +141,32 @@ spEmpVgm$dir.ver <- 0
 spVgmMod <- fit.variogram(spEmpVgm, vgm(800,"Exp",300000,20),fit.sills = TRUE,
                           fit.ranges = TRUE,fit.method = 7,debug.level = 1,
                           warn.if.neg = FALSE,fit.kappa = FALSE)
-print(spVgmMod,digit=3) 
+if (show_details) {print(spVgmMod,digit=3)} 
 
 plot(spEmpVgm, spVgmMod)
 
 #estimation the ansiotrpy
 linStAni <- estiStAni(empVgm, c(50000,200000))
 
+#demo variogram-distance relationship
+plot(gamma~dist, empVgm[empVgm$timelag == 0,], ylim=c(0,100), xlim=c(0,800000))
+points(empVgm[empVgm$spacelag == 0,]$timelag*linStAni, empVgm[empVgm$spacelag == 0,]$gamma, col="red")
 
+
+#separableModel for ST kriging
+separableModel <- vgmST("separable", 
+                        space=vgm(0.9,"Exp", 200, 0.1),
+                        time =vgm(0.9,"Sph", 3.5, 0.1),
+                        sill=120)
+print(separableModel)
+
+#fit the ST model
+fitSepModel <- fit.StVariogram(empVgm, separableModel, fit.method = 7, 
+                               stAni = linStAni, method = "L-BFGS-B", 
+                               control = list(parscale=c(100,1,10,1,100)),
+                               lower = c(10,0,.1,0,0.1), 
+                               upper = c(2000,1,12,1,200))
+
+attr(fitSepModel, "optim.output")$value
+
+plot(empVgm, fitSepModel, wireframe=T, all=T, scales=list(arrows=F), zlim=c(0,135))
