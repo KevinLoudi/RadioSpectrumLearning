@@ -13,7 +13,7 @@ function [y,cs]=Generate_simulation_dataset(SourceInfo,NoiseInfo,len)
     n=Uniform_noise(NoiseInfo.mean, NoiseInfo.std, len);
     y=0; cs=0;
     %PU signal with mean, std and expected visit times
-    for i=length(SourceInfo)
+    for i=1:length(SourceInfo)
         [s,rcs]=Singal_source(SourceInfo{i}.mean,SourceInfo{i}.std,len,SourceInfo{i}.visit_time);
         y=y+s;
         cs=cs+rcs;

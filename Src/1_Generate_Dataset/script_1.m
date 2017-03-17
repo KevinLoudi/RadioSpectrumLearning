@@ -70,37 +70,67 @@ figure(4);
   display('All data analysising finished!!!');
   
  %################################Part 2: Energy detection############################################
- %% with simulation data
- clear; clc; close all;
- len=10000;
- p=1000;
- p_fa=zeros(1,p); p_md=zeros(1,p);
- for i=1:p
-     source_info{1}.mean=50;  source_info{1}.std=10;  source_info{1}.visit_time=3;
-     source_info{2}.mean=30;  source_info{2}.std=8;  source_info{2}.visit_time=8;
-     source_info{3}.mean=15;  source_info{3}.std=3;  source_info{3}.visit_time=10;
-     source_info{4}.mean=10;  source_info{4}.std=5;  source_info{4}.visit_time=6;
-     noise_info.mean=5; noise_info.std=2; 
-     [y,rcs]=Generate_simulation_dataset(source_info,noise_info,len);
-     [cut_point]=Recursive_oneside_hypthesis_testing(y, 100);
+% Not right 2017-3-17
+ %  %% with simulation data
+%  clear; clc; close all;
+%  len=10000;
+%  p=100;
+%  p_fa=zeros(1,p); p_md=zeros(1,p);
+%  for i=1:p
+%      source_info{1}.mean=80;  source_info{1}.std=10;  source_info{1}.visit_time=25;
+%      source_info{2}.mean=40;  source_info{2}.std=8;  source_info{2}.visit_time=38;
+%      source_info{3}.mean=15;  source_info{3}.std=3;  source_info{3}.visit_time=40;
+%      source_info{4}.mean=10;  source_info{4}.std=5;  source_info{4}.visit_time=25;
+%      noise_info.mean=5; noise_info.std=2; 
+%      [y,rcs]=Generate_simulation_dataset(source_info,noise_info,len);
+%      [cut_point]=Recursive_oneside_hypthesis_testing(y, 100);
+%      thres=cut_point(end);
+%       ycs=y>thres;
+%       err=ycs-rcs;
+%       
+%       err_fa=(err==1);
+%       p_fa(i)=sum(err_fa)/length(rcs);
+%       
+%       err_md=(err==-1);
+%       p_md(i)=sum(err_md)/length(rcs);
+%       
+%       err_all=sum(abs(ycs-rcs))/length(rcs);
+%  end
+%  sum(p_fa)/length(p_fa)
+%  sum(p_md)/length(p_md)
+%  figure(7); subplot(2,1,1); plot(p_fa); xlabel('Times'); ylabel('Probability');title('False alarm probability');
+%  subplot(2,1,2); plot(p_md); xlabel('Times'); ylabel('Probability');title('Miss detection probability');
+%  display('finished!!');
+%  print('FA_MD','-dpng');
+
+%% Generate simulation data and test with energy detection methods
+clear; clc; close all;
+len=1e3;
+exp_time=1e3;
+p_fa=zeros(1,exp_time); p_md=zeros(1,exp_time); %detection results of each time
+for ii=1:exp_time
+    [s,rcs]=Generate_simulation_dataset_v2(50,10,5,5,len);
+    [cut_point]=Recursive_oneside_hypthesis_testing(s, 100);
+    
      thres=cut_point(end);
-      ycs=y>thres;
+      ycs=s>thres;
       err=ycs-rcs;
       
       err_fa=(err==1);
-      p_fa(i)=sum(err_fa)/length(rcs);
+      p_fa(ii)=sum(err_fa)/length(rcs);
       
       err_md=(err==-1);
-      p_md(i)=sum(err_md)/length(rcs);
+      p_md(ii)=sum(err_md)/length(rcs);
       
       err_all=sum(abs(ycs-rcs))/length(rcs);
- end
+end
+
  sum(p_fa)/length(p_fa)
  sum(p_md)/length(p_md)
  figure(7); subplot(2,1,1); plot(p_fa); xlabel('Times'); ylabel('Probability');title('False alarm probability');
-  subplot(2,1,2); plot(p_md); xlabel('Times'); ylabel('Probability');title('Miss detection probability');
- display('finished!!');
- print('FA_MD','-dpng');
+ subplot(2,1,2); plot(p_md); xlabel('Times'); ylabel('Probability');title('Miss detection probability');
+
+
  %% thresholding
  [cut_point]=Recursive_oneside_hypthesis_testing(y, 100);
  thres=cut_point(end);
@@ -294,5 +324,6 @@ load(sprintf(orign_path,'Splocation_1068_1068.mat'));
 data_sum=sum(data_sp,1,'omitnan')./1e6;
 lon=locateion_sp(1,:); lat=locateion_sp(2,:);
 plot(lon,lat,data_sum)
+
 
 

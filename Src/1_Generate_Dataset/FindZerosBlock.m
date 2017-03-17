@@ -7,6 +7,7 @@ function [duration]=FindZerosBlock(sig)
 
  %threshold the vector to get a vector tsig of zeros
  tsig = (abs(sig) >= eps);
+ %tsig = (abs(sig) > eps);
  
  %find the starting indices, ending indices, and duration of each string of zeroes
  dsig = diff([1 tsig 1]);
