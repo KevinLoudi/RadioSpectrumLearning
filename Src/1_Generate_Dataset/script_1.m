@@ -106,29 +106,39 @@ figure(4);
 %% Generate simulation data and test with energy detection methods
 clear; clc; close all;
 len=1e3;
-exp_time=1e3;
+exp_time=1e2;
 p_fa=zeros(1,exp_time); p_md=zeros(1,exp_time); %detection results of each time
+rr=zeros(1,exp_time); %signal-noise ratio
 for ii=1:exp_time
-    [s,rcs]=Generate_simulation_dataset_v2(50,10,5,5,len);
-    [cut_point]=Recursive_oneside_hypthesis_testing(s, 100);
+    [s,rcs,rr(1,ii)]=Generate_simulation_dataset_v2(60,10,len); %import noise parameters with total length
+    split=floor(length(s)/2);
+    train_s=s(1:split);
+    [cut_point]=Recursive_oneside_hypthesis_testing(train_s, 100);
     
-     thres=cut_point(end);
-      ycs=s>thres;
-      err=ycs-rcs;
+    test_s=s(split+1:end);
+    test_rcs=rcs(split+1:end);
+    thres=cut_point(end);
+    test_ycs=test_s>thres;
+    err=test_ycs-test_rcs;
       
-      err_fa=(err==1);
-      p_fa(ii)=sum(err_fa)/length(rcs);
+    err_fa=(err==1);
+    p_fa(ii)=sum(err_fa)/length(test_rcs);
       
-      err_md=(err==-1);
-      p_md(ii)=sum(err_md)/length(rcs);
+    err_d=(err==0);
+    p_d(ii)=sum(err_d)/length(test_rcs);
       
-      err_all=sum(abs(ycs-rcs))/length(rcs);
+    if p_d(ii)<=0.6
+          display('abnormal!!!');
+    end
+      
+      err_all=sum(abs(test_ycs-test_rcs))/length(test_rcs);
 end
 
+ sum(rr)/exp_time
  sum(p_fa)/length(p_fa)
- sum(p_md)/length(p_md)
+ sum(p_d)/length(p_d)
  figure(7); subplot(2,1,1); plot(p_fa); xlabel('Times'); ylabel('Probability');title('False alarm probability');
- subplot(2,1,2); plot(p_md); xlabel('Times'); ylabel('Probability');title('Miss detection probability');
+ subplot(2,1,2); plot(p_d); xlabel('Times'); ylabel('Probability');title('Detection probability');
 
 
  %% thresholding
@@ -177,14 +187,14 @@ end
  subplot(4,1,2); imagesc(pro_data); xlabel('Frequencies'); ylabel('Time slots'); title('Orignal spectrum sample');
  %direct threholding
  cs=pro_data>thres;
- subplot(4,1,3); imagesc(cs); xlabel('Frequencies'); ylabel('Time slots'); title('Gobal ROHT');
- subplot(4,1,4); imagesc(s_cs); xlabel('Frequencies'); ylabel('Time slots'); title('Local ROHT');
+ subplot(4,1,3); imagesc(cs); xlabel('Frequencies'); ylabel('Time slots'); title('ROHT');
+ subplot(4,1,4); imagesc(s_cs); xlabel('Frequencies'); ylabel('Time slots'); title('Sliding-ROHT');
  print('Figs/Adoptive thresholding','-dpng');
  a_cs=cs; %select which kind of cs data
- save('ChannelStauseDataset/ChannelStatus_1710_1740.mat','a_cs');
+ save('Datasets/ChannelStatus_88_108.mat','a_cs');
  tot_time=start_ti:step_ti:stop_ti;
  tot_time=datestr(tot_time,'yyyy-mm-dd HH:MM:SS')
- save('ChannelStauseDataset/Timeindex_1710_1740.mat','tot_time');
+ save('Datasets/Timeindex_88_108.mat','tot_time');
  display('channel analysis finished!!!');
  %% Calculate major index
  %SCR 业务聚集度
