@@ -82,7 +82,7 @@ display('TV data loaded!!!');
   time=datenum(timeix(t1_ix:t2_ix));
   subplot(2,1,2); imagesc(freqix,time,n_data); title('2015-12-16'); ylabel('时间'); xlabel('频率/MHz');
   datetick('y','HHPM')
-  print('Figs/fm','-dpng','-r500');
+  %print('Figs/fm','-dpng','-r500');
   display('FM analysised...');
   
   %% do plot
@@ -93,7 +93,7 @@ display('TV data loaded!!!');
   time=datenum(timeix(t1_ix:t2_ix));
   subplot(2,1,2); imagesc(freqix,time,n_data); title('2015-12-16'); ylabel('时间'); xlabel('频率/MHz');
   datetick('y','HHPM')
-  print('Figs/gsm','-dpng','-r500');
+  %print('Figs/gsm','-dpng','-r500');
   display('GSM analysised...');
   
   %% do plot
@@ -128,9 +128,10 @@ display('TV data loaded!!!');
  %% 
  data=Normalize_matrix(pro_data,0,1)>thres;
  time=datenum(timeix(1):step_ti:timeix(end));
- subplot(3,1,1); imagesc(freqix,time,data); xlabel('频率/MHz'); ylabel('时间'); title('频谱占用状态'); datetick('y','HHPM');
+ figure(1);
+ subplot(3,1,1); imagesc(data); xlabel('频率/MHz'); ylabel('采样次数'); title('（a）频谱占用状态'); %datetick('y','mm/dd HH');
  scr=sum(data,2)/length(freqix); %average each row
- figure(1); subplot(3,1,2); plot(time(1:1000),scr(1:1000)); title('业务聚集度'); datetick('x',' mm/dd HH','keepticks'); xlabel('月/天 时'); ylabel('聚集度值');
+ subplot(3,1,2); plot(time(1:1000),scr(1:1000)); title('（b）业务聚集度'); datetick('x',' mm/dd HH','keepticks'); xlabel('月/天 时'); ylabel('聚集度值');
  
  subplot(3,1,3);
  cvd=zeros(size(freqix));
@@ -140,8 +141,141 @@ display('TV data loaded!!!');
  end
  cvd_ix=find(cvd>300);
  cvd(cvd_ix)=[];
- histogram(cvd,200,'Normalization','probability'); xlabel('空闲窗口数'); ylabel('频率');
+ histogram(cvd,200,'Normalization','probability'); xlabel('空闲窗口数'); ylabel('频率'); title('（c）持续空闲时长分布');
+ %print('Figs/index','-dpng','-r500');
  
+ %*********************************************************************************
+ %% Test compression ability
+  clear;clc;close all;
+ cs_path= 'D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\ChannelStauseDataset\\ChannelStatus_1710_1740.mat';
+ timeix_path= 'D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\ChannelStauseDataset\\Timeindex_1710_1740.mat';
+ load(cs_path);
+ load(timeix_path);
+ dateStamp=tot_time;
+ timeix=datetime(dateStamp,'InputFormat','yyyy-MM-dd HH:mm:SS');
+ seq_mat=a_cs; seq_ix=dateStamp; clear a_cs; clear dateStamp; clear cs_path; clear timeix_path;
+ %% get a sequence 
+ yesfigure=0;
+ startix=find(timeix==datetime('2015-12-16 06:05:00','InputFormat','yyyy-MM-dd HH:mm:SS'));
+ stopix=find(timeix==datetime('2015-12-17 18:05:00','InputFormat','yyyy-MM-dd HH:mm:SS'));
+ if yesfigure
+    figure(1); 
+    imagesc(seq_mat(startix:stopix, :)); title('GSM1800 UL in 2015-12-16');
+ end
+ seq=seq_mat(startix:stopix,:);
+ seq_averaged_by_col=sum(seq,1)/length(seq(:,1));
+ seq_occ_ix=find(seq_averaged_by_col>0.6); %target channel
+ seq=seq(:,seq_occ_ix);
+ seq=seq(:);
+ %shape data to string
+ seq=int16(seq(:,1)');
+ %assemble a string
+ seq_str=strjoin(seq,'');
+%% split original data into train-set and test-set
+% seq_str='11111111111111111001111111111111111111111111111111';
+alp = alphabet(seq_str);
+split_point=length(seq_str)-10;
+seq_train=seq_str(1:split_point);
+seq_test=seq_str((split_point+1):end); 
+%algorithm
+ALGS = {'LZms', 'LZ78', 'PPMC', 'DCTW', 'PST'};;
+params.ab_size = size(alp);
+params.d = 10;  %maxmium order of VMM order %D
+params.m = 2; %only for LZ-MS
+params.s = 8; %only for LZ-MS
+params.pMin = 0.006; %only for PST
+params.alpha= 0; %only for PST
+params.gamma = 0.0006; %only for PST
+params.r = 1.05; %only for PST
+params.vmmOrder = params.d; 
+ 
+disp('---------------------------------------------------');
+disp('working with AB={0,1}');
+disp('---------------------------------------------------');
+disp(' ');
+
+% 3. run each of the VMM algorithms
+for i=1:length(ALGS),
+    disp(sprintf('Working with %s', ALGS{i} ));
+    disp('--------')
+    %create a VMM through training 
+    jVmm = vmm_create(map(alp, seq_train),  ALGS{i}, params);
+    disp(sprintf('Pr(0 | 00) = %f', vmm_getPr(jVmm, map(alp,'0'), map(alp,'00'))));
+    disp(sprintf('Pr(1 | 00) = %f', vmm_getPr(jVmm, map(alp,'1'), map(alp,'00'))));
+    % calculates the length in bits of the  "compressed" representation of
+    % seq.  -log[ Pr ( seq | jVmm) ]
+    disp(sprintf('-lg(Pr(tar))=%f', vmm_logEval(jVmm,map(alp, seq_test))));
+    disp('--------')
+    disp(' ');
+end
+%% % clear; clc; close all;
+% len=1e5;
+% [s,rcs,rr]=Generate_simulation_dataset_v2(10,3,len);
+% seq_str=strjoin(rcs,'');
+% seq_mean=sum(rcs)/length(rcs);
+
+%% Prediction ability
+alp = alphabet(seq_str);
+ALGS = {'LZms', 'LZ78', 'PPMC', 'DCTW', 'PST'};;
+params.ab_size = size(alp);
+params.d = 10;  %maxmium order of VMM order %D
+params.m = 2; %only for LZ-MS
+params.s = 8; %only for LZ-MS
+params.pMin = 0.006; %only for PST
+params.alpha= 0; %only for PST
+params.gamma = 0.0006; %only for PST
+params.r = 1.05; %only for PST
+params.vmmOrder = params.d; 
+
+%split the dataset into five part
+split_point=[1, floor(length(seq_str)/5),floor(2*length(seq_str)/5),floor(3*length(seq_str)/5),...
+    floor(4*length(seq_str)/5), length(seq_str)];
+
+datasets=cell(1,5);
+for i=1:5
+    datasets{i}=seq_str(split_point(i):split_point(i+1));
+%     display(sprintf('Dataset %s',num2str(i)));
+%     size(datasets{i});
+end
+train_sets=strcat(datasets{1},datasets{2},datasets{4},datasets{5});
+test_sets=datasets{3};
+
+rand_sel=floor((length(test_sets)-10)*rand());
+context=test_sets(rand_sel-10:rand_sel);
+rcs=test_sets((rand_sel+1):(rand_sel+10));
+pre_steps=length(rcs);
+pre_states=zeros(1,pre_steps);
+
+
+%% 
+display('Test prediction ability....');
+
+for ii=1:length(ALGS),
+    disp(sprintf('Working with %s', ALGS{ii} ));
+    disp('--------')
+  for i=1:pre_steps
+    jVmm = vmm_create(map(alp, train_sets),  ALGS{ii}, params);
+    p_0=vmm_getPr(jVmm, map(alp,'0'), map(alp,context));
+    p_1=vmm_getPr(jVmm, map(alp,'1'), map(alp,context));
+%     context,
+    if p_0>p_1
+        pre_states(i)=0;
+%         if rcs(i)==num2str(pre_states(i)) display('Correct!!'); end
+    else
+        pre_states(i)=1;
+%         if rcs(i)==num2str(pre_states(i)) display('Correct!!'); end
+    end
+    %ipdate context
+    context(1)=[];
+    context=strcat(context, rcs(i));
+  end
+  display(sprintf('Prediction results of %s', ALGS{ii}));
+  pre_cs=strjoin(pre_states,'')
+  err=(pre_cs-rcs);
+  display(sprintf('Error rate of %s: ', ALGS{ii}, num2str(sum(abs(err))/length(err))));
+  
+end
+
  
   %% Plot simulation data 
 t = 0;%time for spectrum access event happen

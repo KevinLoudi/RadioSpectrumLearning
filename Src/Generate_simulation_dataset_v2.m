@@ -10,14 +10,14 @@ n = 0;%access times
 a = [];%access- time table 
 traffic_data =zeros(1,len);
 while(t<len)
-    e = exprnd(20);%interval of spectrum access--following expontiental distribution
+    e = exprnd(10);%interval of spectrum access--following expontiental distribution
     t = t + e;
     n = n + 1;
     a = [a;n,t];
 end    
 a = a'; 
 
-occupy = geornd(0.2,1,n);%following geo-distribution
+occupy = geornd(0.5,1,n);%following geo-distribution
 %set average occupancy time 
 for j = 1:n
     i = ceil(a(2,j));
