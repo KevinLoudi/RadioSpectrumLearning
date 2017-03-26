@@ -1,95 +1,34 @@
-%% 
-% clear; clc; close all;
-% len=1e5;
-% [s,rcs,rr]=Generate_simulation_dataset_v2(10,3,len);
-% seq_str=strjoin(rcs,'');
-% seq_mean=sum(rcs)/length(rcs);
-% 
-%% Preparation
-alp = alphabet(seq_str);
-ALGS = {'LZms', 'LZ78', 'PPMC', 'DCTW', 'PST'};;
-params.ab_size = size(alp);
-params.d = 10;  %maxmium order of VMM order %D
-params.m = 2; %only for LZ-MS
-params.s = 8; %only for LZ-MS
-params.pMin = 0.006; %only for PST
-params.alpha= 0; %only for PST
-params.gamma = 0.0006; %only for PST
-params.r = 1.05; %only for PST
-params.vmmOrder = params.d; 
-
-%split the dataset into five part
-split_point=[1, floor(length(seq_str)/5),floor(2*length(seq_str)/5),floor(3*length(seq_str)/5),...
-    floor(4*length(seq_str)/5), length(seq_str)];
-
-datasets=cell(1,5);
-for i=1:5
-    datasets{i}=seq_str(split_point(i):split_point(i+1));
-%     display(sprintf('Dataset %s',num2str(i)));
-%     size(datasets{i});
-end
-train_sets=strcat(datasets{1},datasets{2},datasets{4},datasets{5});
-test_sets=datasets{3};
-
-pre_steps=20;
-rand_sel=floor((length(test_sets)-pre_steps)*rand());
-context=test_sets((rand_sel-pre_steps+1):rand_sel);
-rcs=test_sets((rand_sel+1):(rand_sel+pre_steps));
-pre_states=zeros(1,pre_steps);
-
-
-% %% Model match level
-% %algorithm 
-% disp('---------------------------------------------------');
-% disp('working with AB={0,1}');
-% disp('---------------------------------------------------');
-% disp(' ');
-% 
-% % 3. run each of the VMM algorithms
-% for i=1:length(ALGS),
-%     disp(sprintf('Working with %s', ALGS{i} ));
-%     disp('--------')
-%     %create a VMM through training 
-%     t=cputime;
-%     jVmm = vmm_create(map(alp, train_sets),  ALGS{i}, params);
-%     
-%     disp(sprintf('Pr(0 | 0001) = %f', vmm_getPr(jVmm, map(alp,'0'), map(alp,'0001'))));
-%     e=double(cputime-t),
-%     %disp(sprintf('Pr(1 | 1110) = %f', vmm_getPr(jVmm, map(alp,'1'), map(alp,'1110'))));
-%     % calculates the length in bits of the  "compressed" representation of
-%     % seq.  -log[ Pr ( seq | jVmm) ]
-%     disp(sprintf('-lg(Pr(tar))=%f', vmm_logEval(jVmm,map(alp, context))));
-%     disp('--------')
-%     disp(' ');
-% end
-
-%% Prediction ability
-
-
-%% 
-display('Test prediction ability....');
-
-for ii=1:length(ALGS),
-    disp(sprintf('Working with %s', ALGS{ii} ));
-    disp('--------')
-  for i=1:pre_steps
-    jVmm = vmm_create(map(alp, train_sets),  ALGS{ii}, params);
-    p_0=vmm_getPr(jVmm, map(alp,'0'), map(alp,context));
-    p_1=vmm_getPr(jVmm, map(alp,'1'), map(alp,context));
-    if p_0>p_1
-        pre_states(i)=0;
-    else
-        pre_states(i)=1;
+ clear; clc; close all;
+ s_mask=zeros(1e3,1e3);
+ %define some channel
+ s_mask(: ,[50:90, 140:185, 214:238, 290:310, 460:480, 665:675, 730:740, 800:835, 890:924])...
+     =s_mask(: ,[50:90, 140:185, 214:238, 290:310, 460:480, 665:675, 730:740, 800:835, 890:924])|1;
+ 
+ c_ix={50:90, 140:185, 214:238, 290:310, 460:480, 665:675, 730:740, 800:835, 890:924};
+ c_num=9;
+ 
+ spectrum=s_mask;
+ len=1e3;
+ 
+ %generate mimic spectrum
+ figure(1);
+ for j=1:c_num
+         % s_num:4  lamda:80 p=0.5
+        [s,rcs,rr]=Generate_simulation_dataset_v2(10,3,len,100,0.2,4); %import noise parameters with total length
+    for i=c_ix{j}
+        spectrum(:,i)=spectrum(:,i).*s(1,1:1e3)';
     end
-    %ipdate context
-    context(1)=[];
-    context=strcat(context, rcs(i));
-  end
-  display(sprintf('Prediction results of %s', ALGS{ii}));
-  pre_cs=strjoin(pre_states,'')
-  err=(pre_cs-rcs);
-  display(sprintf('Error rate of %s: ', ALGS{ii}, num2str(sum(abs(err))/length(err))));
-  
-end
+ end
+ imagesc(spectrum); xlabel('频率'); ylabel('时间');title('轻负载');
+ colorbar;
+ 
+path='D:/doc/PapaerLibrary/Figures/data_mul';
+print(path,'-dpng','-r500');
+ 
 
+
+ 
+% freqix=1:1e3; freqwidth=100;
+% timeix=1:1e3; timewidth=100;
+% [s_cs,s_thres]=SlidingThresholding(spectrum,freqix,freqwidth);
 

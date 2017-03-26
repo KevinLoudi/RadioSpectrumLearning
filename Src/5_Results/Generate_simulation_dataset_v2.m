@@ -4,20 +4,20 @@
 % Enviroment: Matlab 2015b
 % @auththor: kevin
 
-function [traffic_data,traffic,r]=Generate_simulation_dataset_v2(noise_mu,noise_theate,len)
+function [traffic_data,traffic,r]=Generate_simulation_dataset_v2(noise_mu,noise_theate,len,lamda,p,s_num)
 t = 0;%time for spectrum access event happen
 n = 0;%access times
 a = [];%access- time table 
 traffic_data =zeros(1,len);
 while(t<len)
-    e = exprnd(10);%interval of spectrum access--following expontiental distribution
+    e = exprnd(lamda);%interval of spectrum access--following expontiental distribution
     t = t + e;
     n = n + 1;
     a = [a;n,t];
 end    
 a = a'; 
 
-occupy = geornd(0.5,1,n);%following geo-distribution
+occupy = geornd(p,1,n);%following geo-distribution
 %set average occupancy time 
 for j = 1:n
     i = ceil(a(2,j));
@@ -36,7 +36,7 @@ stop_point=find((diff(traffic)==-1));
 %randomly pick signal distributions
 s_mean_mu=40; s_mean_theata=10;
 s_var_mu=10; s_var_theata=3;
-s_num=4;
+% s_num=4;
 
 mu=random('Normal', s_mean_mu, s_mean_theata, 1, s_num);
 theata=random('Normal', s_var_mu, s_var_theata, 1, s_num);

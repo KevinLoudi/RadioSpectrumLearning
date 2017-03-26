@@ -13,7 +13,7 @@ function LoadMultiSensorsSpectrum()
      '20','21','22','23','25','26','27','28','30','31','33','34','35','36','37','38','39',...
      '40','42','45','46','47','48','49','51','52','53','54','55','56','58','59','60','61',...
      '62','63','64','65','66','68','69','71','72','73','76','77','78','79','80','81','82',...
-     '83','84','85','87','88','89','90','92'}; %
+     '83','84','85','87','88','89','90','92'};
 
  %with trobule: '19' '50'
  
@@ -30,8 +30,8 @@ display('Step2: read file and load data....');
    
    %Path ='D:\\Code\\Backup\\Matlab\\SpectrumLearning\\Data\\OriginData\\1710-1960\\%s\\02';
     %Critical Parameters
-    StartF= 106800;%kHz
-    StopF=106800;%
+    StartF=88000;%kHz
+    StopF=108000;%
     StepF = 25;
     
    check_name=sprintf('MultiSensorsDataset\\Dataset_%s_%s_%s.mat',int2str(SensorIds{i}), ...
@@ -91,41 +91,41 @@ function CSVFormatWriter(FileName,days)
       int2str(MultiLevel.Info.StopFreq));
   deviceInfo=MultiLevel.Info;
   
-  timeix=datetime(dateStamp,'InputFormat','yyyy-MM-dd HH:mm:SS');
+%   timeix=datetime(dateStamp,'InputFormat','yyyy-MM-dd HH:mm:SS');
   
-  start_ti=datetime('2015-12-15 00:00:00','InputFormat','yyyy-MM-dd HH:mm:SS');
-  step_ti=minutes(5); %5 minutes duration between 2 time slots
-  stop_ti=datetime('2015-12-22 23:55:00','InputFormat','yyyy-MM-dd HH:mm:SS');
-  freqix=MultiLevel.Info.StartFreq:MultiLevel.Info.StopFreq:MultiLevel.Info.StopFreq;
+%   start_ti=datetime('2015-12-15 00:00:00','InputFormat','yyyy-MM-dd HH:mm:SS');
+%   step_ti=minutes(5); %5 minutes duration between 2 time slots
+%   stop_ti=datetime('2015-12-22 23:55:00','InputFormat','yyyy-MM-dd HH:mm:SS');
+%   freqix=MultiLevel.Info.StartFreq:MultiLevel.Info.StopFreq:MultiLevel.Info.StopFreq;
   
-  exp_ti_slots=(stop_ti-start_ti)/step_ti+1; %expected time slots
-  pro_data=0;
-  
-  %deal with missing data
-  if exp_ti_slots==length(dataLevel(:,1))
-     display('no missed data');
-     pro_data=dataLevel;
- %unequal to the therotical value, must miss some data
- else
-     display('need to process missed data!!!');
-     pro_data=zeros(exp_ti_slots,length(freqix)); %prepare to process the missing data
-     ti=start_ti; ixt=1; %index for time slots
-     ix=1; %index for the row of dataset
-     
-     %timeix--time stampe for file; r_timxix--time stamp for the interested
-     %intreval
-     r_ix=start_ti:step_ti:stop_ti;
-     pro_data(:,:)=NaN;
-     for ix=1:length(timeix)
-         %assign every element of data to the correct position
-         pro_data(find(r_ix==timeix(ix)),:)=dataLevel(ix,:);
-     end
-  end
-
-  %renew data and timestamp
-  dataLevel=pro_data;
-  dateStamp=datestr(r_ix,'yyyy-mm-dd HH:MM:SS'); 
-  clear pro_data;
+%   exp_ti_slots=(stop_ti-start_ti)/step_ti+1; %expected time slots
+%   pro_data=0;
+%   dataLevel=sum(dataLevel,2)/length(dataLevel(1,:));
+%   %deal with missing data
+%   if exp_ti_slots==length(dataLevel(:,1))
+%      display('no missed data');
+%      pro_data=dataLevel;
+%  %unequal to the therotical value, must miss some data
+%  else
+%      display('need to process missed data!!!');
+%      pro_data=zeros(exp_ti_slots,length(freqix)); %prepare to process the missing data
+%      ti=start_ti; ixt=1; %index for time slots
+%      ix=1; %index for the row of dataset
+%      
+%      %timeix--time stampe for file; r_timxix--time stamp for the interested
+%      %intreval
+%      r_ix=start_ti:step_ti:stop_ti;
+%      pro_data(:,:)=NaN;
+%      for ix=1:length(timeix)
+%          %assign every element of data to the correct position
+%          pro_data(find(r_ix==timeix(ix)),:)=dataLevel(ix,:);
+%      end
+%   end
+% 
+%   %renew data and timestamp
+%   dataLevel=pro_data;
+%   dateStamp=datestr(r_ix,'yyyy-mm-dd HH:MM:SS'); 
+%   clear pro_data;
  
   save(dataSetname,'deviceInfo','dateStamp','dataLevel');
   display('finish work on a sensor..');

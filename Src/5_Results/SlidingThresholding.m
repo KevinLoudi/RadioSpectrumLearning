@@ -5,23 +5,26 @@
 
 function [cs,thres]=SlidingThresholding(data,freqix,freqwidth)
 
-width=freqwidth/0.025; %40
+%width=freqwidth/0.025; %40
+width=freqwidth;
 startix=1; ix=startix;
-stopix=startix+length(freqix);
+stopix=startix+length(freqix)-1;
+
+
 cs=zeros(size(data));
 thres=[];
 
-while ix<=stopix-width
-     local_data=data(:,ix:(ix+width));
-     [cut_point]=Recursive_oneside_hypthesis_testing(local_data,20);
+ while ix<=stopix-width
+     local_data=data(:,ix:(ix+width-1));
+     [cut_point]=Recursive_oneside_hypthesis_testing(local_data,20, 1.6);
      local_thres=cut_point(end);
      thres=[thres,local_thres];
-     cs(:,ix:(ix+width))=data(:,ix:(ix+width))>local_thres; %local thresholding
+     cs(:,ix:(ix+width-1))=data(:,ix:(ix+width-1))>local_thres; %local thresholding
      ix=ix+width; %move to the next region
-end
+ end
 
 local_data=data(:,ix:end);
-[cut_point]=Recursive_oneside_hypthesis_testing(local_data,20);
+[cut_point]=Recursive_oneside_hypthesis_testing(local_data,20,1.6);
 local_thres=cut_point(end);
 thres=[thres,local_thres];
 cs(:,ix:end)=data(:,ix:end)>local_thres; %local thresholding

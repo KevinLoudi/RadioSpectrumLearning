@@ -6,7 +6,7 @@
 %  Version: v1.0 (Last Modification Date: 11th January, 2017)
 % ****************************************************
 
-function [cut_point]=Recursive_oneside_hypthesis_testing(data, times)
+function [cut_point]=Recursive_oneside_hypthesis_testing(data, times,z_alph)
     if(nargin<2)
         error('Input parameters lacked!!!');
         exit;
@@ -16,7 +16,7 @@ function [cut_point]=Recursive_oneside_hypthesis_testing(data, times)
     end
     tol_std=0.001;
     data_vec=data(:);
-    z_alph=1.645;%2.58;%1.645; % 95%confidence
+    %z_alph=1.645;%2.58;%1.645; % 95%confidence
     cut_point=zeros(1,times); %save threshold cut point
     d_mean=zeros(1,times); 
     d_std=zeros(1,times); 

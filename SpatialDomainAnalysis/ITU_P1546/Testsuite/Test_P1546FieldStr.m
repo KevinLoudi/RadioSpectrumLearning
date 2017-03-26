@@ -5,10 +5,10 @@ clc
 % Simple case effective height is known. All the value are on the curve
 % Land propagation is assumed.
 'Test 1'
-f = 100;
-d = 1000;
-t = 10;
-heff = 20;
+f = 100; %100MHz
+d = 1000; %1000km
+t = 10; %transmitter height
+heff = 20; %terrin effect
 E = P1546FieldStr(d,f,t,heff)
 ValuefromTable = -62.94847;
 isequal(ValuefromTable, E)
@@ -78,3 +78,4 @@ end
 semilogx(d,y,'b-')
 hold off
 % test 5 end
+

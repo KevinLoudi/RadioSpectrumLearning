@@ -20,7 +20,7 @@ plot_forecast_error<-function(forecasterrors)
   if (mymax2 > mymax) { mymax <- mymax2 }
   # make a red histogram of the forecast errors, with the normally distributed data overlaid:
   mybins <- seq(mymin, mymax, mybinsize)
-  hist(forecasterrors, col="red", freq=FALSE, breaks=mybins)
+  hist(forecasterrors, col="red", freq=FALSE, breaks=mybins,main="ARIMA拟合残差",xlab="残差值",ylab="样本密度")
   # freq=FALSE ensures the area under the histogram = 1
   # generate normally distributed data with mean 0 and standard deviation mysd
   myhist <- hist(mynorm, plot=FALSE, breaks=mybins)

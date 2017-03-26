@@ -6,9 +6,23 @@
 %  Environment: Matlab R2015b
 %  Version: v1.0 (Last Modification Date: 20th January, 2017)
 % ****************************************************
+%% 
+[X,Y]=meshgrid(0:0.001:1);
+x=locateion_sp(1,:);
+y=locateion_sp(2,:);
+x=(x-min(x))/(max(x)-min(x));
+y=(x-min(y))/(max(y)-min(y));
+z=data_sp(1,:);
+ v = variogram([x y],z,'plotit',false,'maxdist',1001);
+[dum,dum,dum,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','stable');
+[Zhat,Zvar] = kriging(vstruct,x,y,z,X,Y);
+
+%% 
 
  % create random field with autocorrelation
-    [X,Y] = meshgrid(0:500);
+    %[X,Y] = meshgrid(locateion_sp(1,:),locateion_sp(2,:));
+    [X,Y]=meshgrid(0:500);
+    %Z=data_sp(1,:);
     Z = randn(size(X));
     Z = imfilter(Z,fspecial('gaussian',[40 40],8));
 

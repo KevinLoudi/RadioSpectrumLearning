@@ -32,8 +32,8 @@ for n=1:device_n
        display('no missed data');
        pro_data=dataLevel;
     %unequal to the therotical value, must miss some data
-    else
-     display('need to process missed data!!!');
+     else
+    % display('need to process missed data!!!');
      pro_data=zeros(exp_ti_slots,length(freqix)); %prepare to process the missing data
      ti=start_ti; ixt=1; %index for time slots
      ix=1; %index for the row of dataset
@@ -63,33 +63,9 @@ for n=1:device_n
 end
 
 display('finish spatial data load!!!');
+
 %% re-save loaded data
 save_path='D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/%s';
 save(sprintf(save_path, 'Spdata_1730_1740.mat'),'data_sp');
 save(sprintf(save_path,'Sptime_1730_1740.mat'),'dateStamp');
 save(sprintf(save_path,'Splocation_1730_1740.mat'),'locateion_sp');
-
-%% pure spatial analysis
-clear; clc; close all;
-orign_path='D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/%s';
-load(sprintf(orign_path, 'Spdata_1730_1740.mat'));
-load(sprintf(orign_path, 'Sptime_1730_1740.mat'));
-load(sprintf(orign_path,'Splocation_1730_1740.mat'));
-%% 
-% %data_sp(:,[2 15 54 56 57 66 70])=[];
-% locateion_sp(:,[2 15 54 56 57 66 70])=[];
-% save_path='D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/%s';
-% save(sprintf(save_path, 'Spdata_1730_1740.mat'),'data_sp');
-% save(sprintf(save_path,'Sptime_1730_1740.mat'),'dateStamp');
-% save(sprintf(save_path,'Splocation_1730_1740.mat'),'locateion_sp');
-
-data_sp(:,[3 7 13 14 17 19 21 38 42 45 46 49 50 52 59 60 61 64])=[];
-locateion_sp(:,[3 7 13 14 17 19 21 38 42 45 46 49 50 52 59 60 61 64])=[];
-%% 
-
-save_path='D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/%s';
-save(sprintf(save_path, 'Spdata_1730_1740.mat'),'data_sp');
-save(sprintf(save_path,'Sptime_1730_1740.mat'),'dateStamp');
-save(sprintf(save_path,'Splocation_1730_1740.mat'),'locateion_sp');
-
-

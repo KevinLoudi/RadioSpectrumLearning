@@ -31,91 +31,153 @@ plot.ts(dc.dif)
 adfTest(dc.dif,lags=10,type = "nc",title=NULL,description = NULL)
 
 #lag p exceeds the significance bounds p=2
-acf(dc.dif,lag.max=10,main='Autocorrect function')
+graphics.off()
+#par(mar=c(3,3,3,3))
+attach(mtcars)
+par(mfrow=c(1,2))
+acf(dc.dif,lag.max=20,main="自相关函数",xlab="滞后期数目",ylab="自相关系数")
 #slowly decreasing in magnitude with increasing lag q=10
-pacf(dc.dif,lag.max=30,main='Partial autocorrect function')
+pacf(dc.dif,lag.max=20,main="偏自相关函数",xlab="滞后期数目",ylab="偏自相关系数")
+
 
 #AIC and BIC (1,1,2)
 require(forecast)
 model_par<-forecast::auto.arima(dc.dif,ic="bic")
 model_par
 
+#SARIMA
+require(astsa)
+sarima(log(AirPassengers),1,1,2,0,1,1,400,details = TRUE,Model=TRUE)
+
 #estimate model parameters
 dc.arima<-arima(dc,order=c(1,1,2))
 dc.arima
-dc.forecast<-forecast.Arima(dc.arima,h=20,level=c(99.5))
-plot(dc.forecast)
+dc.forecast<-forecast.Arima(dc.arima,h=12,level=c(99.5))
+plot(dc.forecast,main="ARIMA预测",xlab="监测周期数",ylab="SCR指标")
 
 #fit error analysis
 plot_forecast_error(dc.arima$residuals)
 plot_forecast_error(dc.forecast$residuals)
 
+#check if ARCH effect exist
+require(FinTS)
+require(rugarch)
+ArchTest(dc.arima$residuals)
+arch.spec=ugarchspec(variance.model=list(garchOrder=c(7,0)),
+                     mean.model=list(armaOrder=c(0,0)))
+
 ##############test scripts for class 'SDSTF'#############
 # prepare library
-library(R.matlab)
-library(xts)
-library(spacetime)
-require(sp) 
-require(gstat) #load/install + load installr
-show_fig<-FALSE #do not show unimportant figures
-show_details<-TRUE #do show details in console
+load_sp_library<-function()
+{
+  library(R.matlab)
+  library(xts)
+  library(spacetime)
+  require(sp) 
+  require(gstat) #load/install + load installr
+  library(sp)
+}
 
-#load data set
-origin_path<-"D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/"
-start_freq<-1068 #kHz
-stop_freq<-1068
-path<-paste(origin_path,"Spdata_1068_1068.mat",sep = "") #data matrix
-sp_data<-readMat(path,open='r')
-path<-paste(origin_path,"Splocation_1068_1068.mat",sep = "") #location set
-sp_loc<-readMat(path,open='r')
-path<-paste(origin_path,"Sptime_1068_1068.mat",sep = "") #time stamp
-sp_ti<-readMat(path,open='r')
-path<-paste(origin_path,"SensorIds.mat",sep = "") #sensor/device names
-sp_de<-readMat(path,open='r')
+setup_figure_shown<-function()
+{
+  show_fig<-FALSE #do not show unimportant figures
+  show_details<-TRUE #do show details in console
+}
 
-#reserve partial data
-start_obs=500
-stop_obs=700  #cut off by index
-sp_data<-sp_data$data.sp[start_obs:stop_obs,] #data list
-sp_loc<-sp_loc$locateion.sp #location list
-sp_ti<-as.POSIXct(sp_ti$dateStamp[start_obs:stop_obs]) #transform to standard time stampe
-sp_de<-sp_de$SensorIds #sensor list
-de_num<-length(sp_de) #sensor num
+load_spatial_dataset<-function()
+{
+  #load data set
+  origin_path<-"D:/Code/WorkSpace/ThesisCode/Src/4_Spatio_time/SpatialDataset/"
+  start_freq<-1068 #kHz
+  stop_freq<-1068
+  path<-paste(origin_path,"Spdata_1068_1068.mat",sep = "") #data matrix
+  sp_data<-readMat(path,open='r')
+  path<-paste(origin_path,"Splocation_1068_1068.mat",sep = "") #location set
+  sp_loc<-readMat(path,open='r')
+  path<-paste(origin_path,"Sptime_1068_1068.mat",sep = "") #time stamp
+  sp_ti<-readMat(path,open='r')
+  path<-paste(origin_path,"SensorIds.mat",sep = "") #sensor/device names
+  sp_de<-readMat(path,open='r')
+}
 
+shape_dataset<-function()
+{
+  #reserve partial data
+  start_obs=500
+  stop_obs=700  #cut off by index
+  sp_data<-sp_data$data.sp[start_obs:stop_obs,] #data list
+  sp_loc<-sp_loc$locateion.sp #location list
+  sp_ti<-as.POSIXct(sp_ti$dateStamp[start_obs:stop_obs]) #transform to standard time stampe
+  sp_de<-sp_de$SensorIds #sensor list
+  de_num<-length(sp_de) #sensor num
+}
 
-#create spatial grid as coordinates
-grid=cbind(x=sp_loc[1,1:de_num],y=sp_loc[2,1:de_num])
-row.names(grid) = paste("point", 1:nrow(grid), sep="")
-#create spatialpoints object 'grid'
-grid=SpatialPoints(grid)
-if (show_fig) {plot(grid@coords)}
+create_spatial_temporal_object<-function()
+{
+  #create spatial grid as coordinates 
+  #normalize loaction 
+  x=sp_loc[1,1:de_num]
+  x_nor=(x-min(x))/(max(x)-min(x))
+  y=sp_loc[2,1:de_num]
+  y_nor=(y-min(y))/(max(y)-min(y))
   
-#create extensible time stamp 'grid_time'
-len=length(sp_ti)
-grid_time=xts(1:len,as.POSIXct(sp_ti))
-plot(grid_time)
-m_g=c(1:de_num)
+  grid=cbind(x_nor,y=y_nor)
+  row.names(grid) = paste("point", 1:nrow(grid), sep="")
+  #create spatialpoints object 'grid'
+  grid=SpatialPoints(grid)
+  if (show_fig) 
+  {
+    graphics.off()
+    attach(mtcars)
+    par(mfrow=c(1,1))
+    plot(grid@coords,main="监测节点相对位置",xlab="相对经度",ylab="相对纬度")
+  }
+  
+  #create extensible time stamp 'grid_time'
+  len=length(sp_ti)
+  grid_time=xts(1:len,as.POSIXct(sp_ti))
+  plot(grid_time)
+  m_g=c(1:de_num)
+  
+  #assign ID for data point
+  m_data<-as.vector(sp_data)
+  t_data=(m_data-min(m_data,na.rm=TRUE))/(max(m_data,na.rm=TRUE)-min(m_data,na.rm=TRUE))
+  t_data<-t_data[1:de_num]
+  grid
+  plot(t_data,main="空间频谱能量采样集合(2015-12-16 17:35:00)",xlab="监测编号",ylab="频谱能量")
+  IDs = paste("ID",1:length(m_data)) # ID for each data point
+  
+  #organize data in frame
+  mydata = data.frame(values = signif(m_data,de_num), ID=IDs) # 12 observers
+  
+  #create Spatial-temporal object
+  grid_df = STFDF(grid, grid_time, mydata) #create a 'SDSTF' object
+  grid_df=as(grid_df,"STSDF")
+  
+  ##statistics for data set
+  grid_dd<-grid_df@data
+  if (show_fig) {plot(grid_dd)}
+}
 
-#assign ID for data point
-m_data<-as.vector(sp_data)
-plot(m_data)
-IDs = paste("ID",1:length(m_data)) # ID for each data point
 
-#organize data in frame
-mydata = data.frame(values = signif(m_data,de_num), ID=IDs) # 12 observers
+create_pure_spatial_object<-function()
+{
+  data(meuse)
+  coordinates(meuse)=~x+y
+  bubble(meuse,"zinc",col=c("#00ff0088", "#00ff0088"),
+         main = "zinc concentrations (ppm)")
+  
+  grid=cbind(x_nor,y=y_nor)
+  SpatialPointsDataFrame(grid,t_data)
+}
 
-#create Spatial-temporal object
-grid_df = STFDF(grid, grid_time, mydata) #create a 'SDSTF' object
-grid_df=as(grid_df,"STSDF")
-
-##statistics for data set
-grid_dd<-grid_df@data
-if (show_fig) {plot(grid_dd)}
 
 #summary observations of each station
-barplot(sort(table(grid_df@index[,1])),
-        main="reported days per station",
-        ylab="number of days", xaxt="n")
+#barplot(sort(table(grid_df@index[,1])),main="reported days per station",
+#        ylab="number of days", xaxt="n")
+
+
+
 
 var(grid_df@data$values)
 
@@ -170,3 +232,7 @@ fitSepModel <- fit.StVariogram(empVgm, separableModel, fit.method = 7,
 attr(fitSepModel, "optim.output")$value
 
 plot(empVgm, fitSepModel, wireframe=T, all=T, scales=list(arrows=F), zlim=c(0,135))
+
+
+
+
