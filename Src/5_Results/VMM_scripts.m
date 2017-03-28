@@ -209,11 +209,156 @@ subplot(3,1,3);
 plot(train_steps_arr(1:4:end),predict_time_arr(1:4:end),'-kv','LineWidth', 0.8,'MarkerSize',4); xlabel('训练序列长度', 'FontSize',12); ylabel('预测用时/sec', 'FontSize',12);
 %  path='D:/doc/PapaerLibrary/Figures/vmm_gsm';
 %  print(path,'-dpng','-r500');
- 
- 
 
 
+%% 
+%=======================VMM: conditional probability
+%% load data set
+clear;clc;close all;
+ cs_path= 'D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\ChannelStauseDataset\\ChannelStatus_1710_1740.mat';
+ timeix_path= 'D:\\Code\\WorkSpace\\ThesisCode\\Src\\1_Generate_Dataset\\ChannelStauseDataset\\Timeindex_1710_1740.mat';
+ load(cs_path);
+ load(timeix_path);
+ dateStamp=tot_time;
+ timeix=datetime(dateStamp,'InputFormat','yyyy-MM-dd HH:mm:SS');
+ seq_mat=a_cs; seq_ix=dateStamp; clear a_cs; clear dateStamp; clear cs_path; clear timeix_path;
+ %% get a sequence 
+ yesfigure=0;
+ startix=find(timeix==datetime('2015-12-16 06:05:00','InputFormat','yyyy-MM-dd HH:mm:SS'));
+ stopix=find(timeix==datetime('2015-12-17 18:05:00','InputFormat','yyyy-MM-dd HH:mm:SS'));
+ if yesfigure
+    figure(1); 
+    imagesc(seq_mat(startix:stopix, :)); title('GSM1800 UL in 2015-12-16');
+ end
+ seq=seq_mat(startix:stopix,:);
+ seq_averaged_by_col=sum(seq,1)/length(seq(:,1));
+ seq_occ_ix=find(seq_averaged_by_col>0.6); %target channel
+ seq=seq(:,seq_occ_ix);
+ seq=seq(:);
+ %shape data to string
+ seq=int16(seq(:,1)');
+ %assemble a string
+seq_str=strjoin(seq,'');
+
+%% load sim-data
+clear; clc; close all;
+len=1e5;
+[s,rcs,rr]=Generate_simulation_dataset_v2(10,3,len,5,0.8,8);
+seq_str=strjoin(rcs,'');
+seq_mean=sum(rcs)/length(rcs);
+
+%% set up train seq and test seq
+split_point=[1, floor(length(seq_str)/5),floor(2*length(seq_str)/5),floor(3*length(seq_str)/5),...
+    floor(4*length(seq_str)/5), length(seq_str)];
+%save data set
+datasets=cell(1,5);
+for i=1:5
+    datasets{i}=seq_str(split_point(i):split_point(i+1));
+end
+%seperate train set and test set
+train_sets=strcat(datasets{1},datasets{2},datasets{4},datasets{5});
+test_sets=datasets{3};
+%% Predictor
+alp=alphabet(train_sets);
+ALGS = {'LZms', 'LZ78', 'PPMC', 'DCTW','BinaryCTW', 'PST'};;
+params.ab_size = size(alp);
+params.d = 10;  %maxmium order of VMM order %D
+params.m = 2; %only for LZ-MS
+params.s = 8; %only for LZ-MS
+params.pMin = 0.006; %only for PST
+params.alpha= 0; %only for PST
+params.gamma = 0.0006; %only for PST
+params.r = 1.05; %only for PST
+params.vmmOrder = params.d; 
  
+disp('---------------------------------------------------');
+disp('working with AB={0,1}');
+disp('---------------------------------------------------');
+disp(' ');
+
+% 3. run each of the VMM algorithms
+for i=[1 3]
+    disp(sprintf('Working with %s', ALGS{i} ));
+    disp('--------')
+    %create a VMM through training 
+    jVmm = vmm_create(map(alp, train_sets),  ALGS{i}, params);
+    disp(sprintf('Pr(0 | 000) = %f', vmm_getPr(jVmm, map(alp,'0'), map(alp,'111'))));
+    disp(sprintf('Pr(1 | 000) = %f', vmm_getPr(jVmm, map(alp,'1'), map(alp,'111'))));
+    % calculates the length in bits of the  "compressed" representation of
+    % seq.  -log[ Pr ( seq | jVmm) ]
+    disp(sprintf('-lg(Pr(tar))=%f', vmm_logEval(jVmm,map(alp, test_sets))/length(test_sets)));
+    disp('--------')
+    disp(' ');
+end 
+%=======================
+
+%=======================VMM prediction accuracy
+%load sim data
+clear; clc; close all;
+len=1e5;
+%heavy load, random occupy
+[s,rcs,rr]=Generate_simulation_dataset_v2(10,3,len,5,0.8,8); 
+seq_str=strjoin(rcs,'');
+
+%set up model parameters
+alp = alphabet(seq_str);
+ALGS = {'LZms', 'LZ78', 'PPMC', 'BinaryCTW' ,'PST'};;
+params.ab_size = size(alp);
+params.d = 10;  %maxmium order of VMM order %D
+params.m = 2; %only for LZ-MS
+params.s = 8; %only for LZ-MS
+params.pMin = 0.006; %only for PST
+params.alpha= 0; %only for PST
+params.gamma = 0.0006; %only for PST
+params.r = 1.05; %only for PST
+params.vmmOrder = params.d; 
+
+%split the dataset into five part
+split_point=[1, floor(length(seq_str)/5),floor(2*length(seq_str)/5),floor(3*length(seq_str)/5),...
+    floor(4*length(seq_str)/5), length(seq_str)];
+%combine into train set and test set
+datasets=cell(1,5);
+for i=1:5
+    datasets{i}=seq_str(split_point(i):split_point(i+1));
+end
+train_sets=strcat(datasets{1},datasets{2},datasets{4},datasets{5});
+test_sets=datasets{3};
+context_len=10;
+context=test_sets(1:context_len);
+
+pre_steps=length(test_sets)-context_len; %needed prediction length 
+pre_states=zeros(1,pre_steps); %place predicted states
+rcs=test_sets(context_len+1:end); %the real result for prediction
+err_arr=zeros(1,1); %only one algorithm
+
+for ii=3%1:length(ALGS),
+    tstart_1=tic;
+    jVmm = vmm_create(map(alp, test_sets),  ALGS{ii}, params);
+    
+    for i=1:pre_steps
+    
+    p_0=vmm_getPr(jVmm, map(alp,'0'), map(alp,context));
+    p_1=vmm_getPr(jVmm, map(alp,'1'), map(alp,context));
+    if p_0>p_1
+        pre_states(i)=0;
+    else
+        pre_states(i)=1;
+    end
+    
+    %update context
+    context(1)=[];
+    context=strcat(context, rcs(i)); %update context with the real data
+    %context=strcat(context, num2str(pre_states(i))); %update context with the prediction data
+    end
+  % calculate error rate of prediction
+  pre_cs=strjoin(pre_states,'');
+  real_cs=strjoin(test_sets(context_len+1:end),'');
+  err=(pre_cs-real_cs);
+  err_rate=sum(abs(err))/length(err);
+  %error rate of the algorithm
+  err_arr(1,ii)=err_rate;
+end
+
 %=======================
 %% Sim data set
 

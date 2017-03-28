@@ -59,7 +59,29 @@ max_dis=1.4;
  xlabel('归一化距离','FontSize',12); ylabel('变差值/dB\muVm^{-1}','FontSize',12);
  [Zhat,Zvar] = kriging(vstruct,x,y,z,X,Y);
 %  print('Figs/varigram','-dpng','-r500');
- 
+
+figure(4);
+subplot(2,2,1); [dum,dum,dum,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','blinear','solver', 'fminsearchbnd');
+ [Zhat,Zvar] = kriging(vstruct,x,y,z,X,Y);
+imagesc(X(1,:),Y(:,1),sqrt(Zvar)); axis image; axis xy;
+ h=colorbar; xlabel(h,'能量估计标准差/dB\muVm^{-1}','FontSize',12);
+xlabel('相对经度','FontSize',12); ylabel('相对纬度','FontSize',12);
+
+subplot(2,2,2); [dum,dum,dum,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','circular','solver', 'fminsearchbnd');
+ [Zhat,Zvar] = kriging(vstruct,x,y,z,X,Y);
+imagesc(X(1,:),Y(:,1),sqrt(Zvar)); axis image; axis xy; 
+
+subplot(2,2,3); [dum,dum,dum,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','exponential','solver', 'fminsearchbnd');
+ [Zhat,Zvar] = kriging(vstruct,x,y,z,X,Y);
+imagesc(X(1,:),Y(:,1),sqrt(Zvar)); axis image; axis xy; 
+
+subplot(2,2,4); [dum,dum,dum,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','stable','solver', 'fminsearchbnd');
+ [Zhat,Zvar] = kriging(vstruct,x,y,z,X,Y);
+imagesc(X(1,:),Y(:,1),sqrt(Zvar)); axis xy; axis image;
+%
+path='D:/doc/PapaerLibrary/Figures/kriging_err';
+print(path,'-dpng','-r500');
+%% plot kriging
  figure(2);
  imagesc(X(1,:),Y(:,1),Zhat); axis image; axis xy; xlabel('相对经度','FontSize',12); ylabel('相对纬度','FontSize',12);
  h = colorbar; hold on; xlabel(h,'频谱能量/dB\muVm^{-1}','FontSize',12)
@@ -82,11 +104,19 @@ for x=1:length(d)
     y(x)=P1546FieldStr(d(x),f,t,h1,h1)...
     -Step_12(f,tca)-Step_14(h2,f,'Land','open',d,h1);
 end
-yy=((y(1)-y).*(y(1)-y))/(20*2);
+yy=(y(1)-y)*(y(1)-y);
 plot(d,yy,'LineWidth',1.0);
 hold on;
-[dum,dum,dum,vstruct] = variogramfit(0:5:95,v.val,[],[],[],'model','gaussian','solver', 'fminsearchbnd');
+[dum,dum,dum,vstruct] = variogramfit(v.distance,sqrt(v.val),[],[],[],'model','exponential','solver', 'fminsearchbnd');
+dis=v.dis;
+plot()
 xlabel('距离/km','FontSize',12); ylabel('频谱能量衰减值/dB\muVm^{-1}','FontSize',12);
-legend('ITU.P.R. 1546模型','变差云图','理论变差函数');
 %print('Figs/itu.p.r.1546','-dpng','-r500');
-%% 
+%% Variogram with progration
+points=[x,y];
+len=60;
+d1=zeros(1,factorial(len)); d2=zeros(1,factorial(n));
+for i=1:60
+    for j=i:60
+        [d1(1,i*j),d2(1,i*j)]=lldistkm;
+end
